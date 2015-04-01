@@ -53,10 +53,10 @@ Ext.define('CustomApp', {
                 'FormattedID',
                 'Name',
                 'Project',
-                'JobSize',
                 'RROEValue',
-                'TimeCriticality',
                 'UserBusinessValue',
+                'TimeCriticality',
+                'JobSize',
                 'WSJFScore'
             ],
             bulkEditConfig: {
@@ -80,7 +80,10 @@ Ext.define('CustomApp', {
             sortableColumns: false, //We will auto sort on WSJF number,
             listeners: {
                 inlineeditsaved: function( grid, record, opts) {
-                    record.set('WSJFScore', (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize'));
+                    var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+
+                    //if the field is 'decimal' you can only have two decimal places....
+                    record.set('WSJFScore', num.toFixed(2));
                     record.save( {
                         callback: function() {
                             Ext.getCmp('piGrid').refresh();
@@ -96,50 +99,46 @@ Ext.define('CustomApp', {
         this.add(grid);
 
         var picard = Ext.create('Ext.Container', {
+            id: 'MakeItSo',
             layout: {
                 type: 'vbox',
                 align: 'center'
-            },
-            items: [{
+            }
+        });
+
+        picard.add( {
                 xtype: 'rallybutton',
                 text: 'Commit',
-                handler:  function() {
-
-                    var store = Ext.getCmp('piGrid').store;
-                    var startRecord = 0;
-
-//                    Rally.data.Ranker.rankToTop(store.data.items[0], this.getRankScope());
-                    var rankingRecord = store.data.items[startRecord];
-                    startRecord += 1;
-
-                    //Send a message to myself to kick off the saving of the rank
-                    this.fireEvent('savedRecordRank', rankingRecord, startRecord);
-
-                },
-                listeners: {
-                    savedRecordRank: function(rankingRecord, startRecord) {
-                        debugger;
-                    }
-                },
-
-//    debugger;
-//                    _.each(store.data.items, function(item) {
-//                        var rankConfig = Rally.data.Ranker.generateRankParameters( { relativeRecord: rankingRecord, position: 'after' });
-//                        rankingRecord = item;
-//
-//                        Rally.data.Ranker.rankRelative( {
-//                            recordToRank: item,
-//                            relativeRecord: store.data.items[0],
-//                            position: 'after'
-//                        });
-//                    });
-//                },
+                handler: this._storeRecords,
                 scope: this
-            }]
         });
 
         this.add(picard);
+    },
+
+    _storeRecords: function() {
+
+        var store = Ext.getCmp('piGrid').store;
+
+        var rankingRecord = store.data.items[0]
+        Rally.data.Ranker.rankToTop( rankingRecord );
+
+        _.each(store.data.items, function(item) {
+            var rankConfig = Rally.data.Ranker.generateRankParameters( { relativeRecord: rankingRecord, position: 'after' });
+            var rrConfig = {
+                    recordToRank: item,
+                    relativeRecord: rankingRecord,
+                    position: 'after'
+                };
+
+            Rally.data.Ranker.rankRelative(rrConfig)
+            rankingRecord = item;
+        });
+
+
     }
+
+
 });
 
 Ext.define('dataModel', {
@@ -208,12 +207,13 @@ Ext.define('wsjfBulkSetRisk', {
                     handler: function(arg1, arg2, arg3) {
                         _.each(this.records, function(record) {
                             record.set('RROEValue', Ext.getCmp('riskBox').value);
-                            record.set('WSJFScore', //
-                                (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize')
-                          //
-                            );
+                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+
+                            //if the field is 'decimal' you can only have two decimal places....
+                            record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
+                                        Ext.getCmp('piGrid').refresh();
                                         Ext.getCmp('riskChooser').destroy();
                                     }
                             });
@@ -283,12 +283,13 @@ Ext.define('wsjfBulkSetValue', {
                     handler: function(arg1, arg2, arg3) {
                         _.each(this.records, function(record) {
                             record.set('UserBusinessValue', Ext.getCmp('valueBox').value);
-                            record.set('WSJFScore', //
-                                (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize')
-                          //
-                            );
+                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+
+                            //if the field is 'decimal' you can only have two decimal places....
+                            record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
+                                        Ext.getCmp('piGrid').refresh();
                                         Ext.getCmp('valueChooser').destroy();
                                     }
                             });
@@ -358,12 +359,13 @@ Ext.define('wsjfBulkSetTime', {
                     handler: function(arg1, arg2, arg3) {
                         _.each(this.records, function(record) {
                             record.set('TimeCriticality', Ext.getCmp('timeBox').value);
-                            record.set('WSJFScore', //
-                                (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize')
-                          //
-                            );
+                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+
+                            //if the field is 'decimal' you can only have two decimal places....
+                            record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
+                                        Ext.getCmp('piGrid').refresh();
                                         Ext.getCmp('timeChooser').destroy();
                                     }
                             });

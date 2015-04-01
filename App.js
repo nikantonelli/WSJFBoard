@@ -111,7 +111,7 @@ Ext.define('CustomApp', {
 
         var store = Ext.getCmp('piGrid').store;
 
-        var rankingRecord = store.data.items[0]
+        var rankingRecord = store.data.items[0];
         Rally.data.Ranker.rankToTop( rankingRecord );
 
         _.each(store.data.items, function(item) {
@@ -122,7 +122,7 @@ Ext.define('CustomApp', {
                     position: 'after'
                 };
 
-            Rally.data.Ranker.rankRelative(rrConfig)
+            Rally.data.Ranker.rankRelative(rrConfig);
             rankingRecord = item;
         });
 
