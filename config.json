@@ -4,7 +4,8 @@
    "server": "https://rally1.rallydev.com",
    "sdk": "2.0",
    "javascript": [
-      "App.js"
+      "App.js",
+      "Proxy/BatchProxy.js"
    ],
    "css": [
       "app.css"
