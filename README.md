@@ -29,10 +29,7 @@ Commit of viewed WSJF table as rank in the database:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.tiff)
 
-## License
+## Caveat!
 
-AppTemplate is released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
+The current version only re-ranks the number of rows shown in the table. Set to 200 for the most re-ranked in one go
 
-##Documentation for SDK
-
-You can find the documentation on our help [site.](https://help.rallydev.com/apps/2.0rc3/doc/)
