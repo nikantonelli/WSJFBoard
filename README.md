@@ -4,7 +4,7 @@ WSJFBoard
 ## Overview
 Grid board to calculate WSJF from Risk, Value, TimeCriticality and JobSize and re-rank within Rally
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/Overview.tiff)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/overview.tiff)
 
 ## License
 
