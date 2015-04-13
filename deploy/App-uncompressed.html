@@ -46,9 +46,29 @@ Ext.define('CustomApp', {
 
     launch: function() {
 
+        var modelNames = ['portfolioitem/initiative'];
+        var context = this.getContext();
+
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
             margin: 30,
+//            stateful: false,
+//            toggleState: 'grid',
+//            plugins: [
+//                {
+//                    ptype: 'rallygridboardcustomfiltercontrol',
+//                    filterControlConfig: {
+//                        modelNames: modelNames,
+//                        stateful: true,
+//                        stateId: context.getScopedStateId('custom-filter-example')
+//                    },
+//                    showOwnerFilter: true,
+//                    ownerFilterControlConfig: {
+//                        stateful: true,
+//                        stateId: context.getScopedStateId('owner-filter-example')
+//                    }
+//                }
+//            ],
             columnCfgs: [
                 'FormattedID',
                 'Name',
@@ -70,12 +90,22 @@ Ext.define('CustomApp', {
             enableRanking: true,
             storeConfig: {
                 batchAction: true,
-                model: 'portfolioitem/initiative',
+                model: modelNames,
                 sorters: {
                     property: 'wsjfScore',
                     direction: 'DESC'
                 },
-                fetch: ['FormattedID', 'Name', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore']
+                fetch: ['FormattedID', 'Name', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                filters: [
+                    {
+                        property: 'State.Name',
+                        operator: '!=',
+                        value: 'Done'
+                    }
+                ]
+//                listeners: {
+//                    load: function(arg1, arg2, arg3) { debugger; }
+//                }
             },
             sortableColumns: false, //We will auto sort on WSJF number,
             listeners: {
@@ -116,27 +146,57 @@ Ext.define('CustomApp', {
         this.add(picard);
     },
 
+    _recordToRank: 0,
+    _rankingRecord: null,
+    _store: null,
+
     _storeRecords: function() {
 
-        var store = Ext.getCmp('piGrid').store;
+        this._store = Ext.getCmp('piGrid').store;
+        this._recordToRank = 0;
+        this._rankingRecord = this._store.data.items[this._recordToRank];
 
-        var rankingRecord = store.data.items[0];
-        Rally.data.Ranker.rankToTop( rankingRecord );
-
-        _.each(store.data.items, function(item) {
-            var rankConfig = Rally.data.Ranker.generateRankParameters( { relativeRecord: rankingRecord, position: 'after' });
-            var rrConfig = {
-                    recordToRank: item,
-                    relativeRecord: rankingRecord,
-                    position: 'after'
-                };
-
-            Rally.data.Ranker.rankRelative(rrConfig);
-            rankingRecord = item;
+        this._rankingRecord.save( {
+            rankTo: 'TOP',
+            callback: function(arg1, arg2, arg3) {
+                this._recordToRank += 1;
+                this._saveNextRecord();
+            },
+            scope: this
         });
+    },
 
-
+    _saveNextRecord: function ()
+    {
+        if ( this._recordToRank < this._store.getCount()){
+            var nextRecord = this._store.data.items[this._recordToRank];
+            Rally.data.Ranker.rankRelative( {
+                recordToRank: nextRecord,
+                relativeRecord: this._rankingRecord,
+                position: 'after',
+                callback: function(arg1, arg2, arg3){
+                    this._recordToRank += 1;
+                    this._rankingRecord = arg1;
+                    this._saveNextRecord();
+                },
+                scope: this
+            });
+        }
     }
+
+
+//        _.each(store.data.items, function(item) {
+//            var rankConfig = Rally.data.Ranker.generateRankParameters( { relativeRecord: rankingRecord, position: 'after' });
+//            var rrConfig = {
+//                    recordToRank: item,
+//                    relativeRecord: rankingRecord,
+//                    position: 'after'
+//                };
+//
+//            Rally.data.Ranker.rankRelative(rrConfig);
+//            rankingRecord = item;
+//        });
+
 
 
 });
