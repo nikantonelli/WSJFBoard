@@ -40,26 +40,18 @@ Ext.define('CustomApp', {
         var modelNames = ['portfolioitem/initiative'];
         var context = this.getContext();
 
+        //Add the option to auto-sort or not
+        this.add( {
+            xtype: 'rallycheckboxfield',
+            fieldLabel: 'Auto-sort on change',
+            id: 'sortCheck',
+            value: false
+        });
+
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
             margin: 30,
-//            stateful: false,
-//            toggleState: 'grid',
-//            plugins: [
-//                {
-//                    ptype: 'rallygridboardcustomfiltercontrol',
-//                    filterControlConfig: {
-//                        modelNames: modelNames,
-//                        stateful: true,
-//                        stateId: context.getScopedStateId('custom-filter-example')
-//                    },
-//                    showOwnerFilter: true,
-//                    ownerFilterControlConfig: {
-//                        stateful: true,
-//                        stateId: context.getScopedStateId('owner-filter-example')
-//                    }
-//                }
-//            ],
+
             columnCfgs: [
                 'FormattedID',
                 'Name',
@@ -79,7 +71,9 @@ Ext.define('CustomApp', {
             context: this.getContext(),
             enableBulkEdit: true,
             enableRanking: true,
+
             storeConfig: {
+                pageSize: 'infinity',
                 batchAction: true,
                 model: modelNames,
                 sorters: {
@@ -94,9 +88,6 @@ Ext.define('CustomApp', {
                         value: 'Done'
                     }
                 ]
-//                listeners: {
-//                    load: function(arg1, arg2, arg3) { debugger; }
-//                }
             },
             sortableColumns: false, //We will auto sort on WSJF number,
             listeners: {
@@ -107,7 +98,9 @@ Ext.define('CustomApp', {
                     record.set('WSJFScore', num.toFixed(2));
                     record.save( {
                         callback: function() {
-                            Ext.getCmp('piGrid').refresh();
+                            if (Ext.getCmp('sortCheck').value === true){
+                                Ext.getCmp('piGrid').refresh();
+                            }
                         }
                     });
                 }
@@ -159,34 +152,23 @@ Ext.define('CustomApp', {
 
     _saveNextRecord: function ()
     {
-        if ( this._recordToRank < this._store.getCount()){
+        if ( this._recordToRank < this._store.totalCount){
             var nextRecord = this._store.data.items[this._recordToRank];
             Rally.data.Ranker.rankRelative( {
                 recordToRank: nextRecord,
                 relativeRecord: this._rankingRecord,
                 position: 'after',
-                callback: function(arg1, arg2, arg3){
-                    this._recordToRank += 1;
-                    this._rankingRecord = arg1;
-                    this._saveNextRecord();
-                },
-                scope: this
+                saveOptions: {
+                    callback: function(arg1, arg2, arg3){
+                        this._recordToRank += 1;
+                        this._rankingRecord = arg1;
+                        this._saveNextRecord();
+                    },
+                    scope: this
+                }
             });
         }
     }
-
-
-//        _.each(store.data.items, function(item) {
-//            var rankConfig = Rally.data.Ranker.generateRankParameters( { relativeRecord: rankingRecord, position: 'after' });
-//            var rrConfig = {
-//                    recordToRank: item,
-//                    relativeRecord: rankingRecord,
-//                    position: 'after'
-//                };
-//
-//            Rally.data.Ranker.rankRelative(rrConfig);
-//            rankingRecord = item;
-//        });
 
 
 
@@ -264,7 +246,10 @@ Ext.define('wsjfBulkSetRisk', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        Ext.getCmp('piGrid').refresh();
+                                        if (Ext.getCmp('sortCheck').value === true){
+                                            Ext.getCmp('piGrid').refresh();
+                                        }
+
                                         Ext.getCmp('riskChooser').destroy();
                                     }
                             });
@@ -340,7 +325,9 @@ Ext.define('wsjfBulkSetValue', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        Ext.getCmp('piGrid').refresh();
+                                        if (Ext.getCmp('sortCheck').value === true){
+                                            Ext.getCmp('piGrid').refresh();
+                                        }
                                         Ext.getCmp('valueChooser').destroy();
                                     }
                             });
@@ -416,7 +403,9 @@ Ext.define('wsjfBulkSetTime', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        Ext.getCmp('piGrid').refresh();
+                                        if (Ext.getCmp('sortCheck').value === true){
+                                            Ext.getCmp('piGrid').refresh();
+                                        }
                                         Ext.getCmp('timeChooser').destroy();
                                     }
                             });
