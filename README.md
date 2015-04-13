@@ -6,6 +6,29 @@ Grid board to calculate WSJF from Risk, Value, TimeCriticality and JobSize and r
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/overview.tiff)
 
+## Features
+
+Inline editing:
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/inline%20editing.tiff)
+
+Normal editing menu:
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/normal%20edit%20menu.tiff)
+
+Bulk editing to standard values:
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/Bulk%20edit%20menu.tiff)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/fibonacci.tiff)
+
+Auto-sorting of table after every edit:
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/auto%20sorting.tiff)
+
+Commit of viewed WSJF table as rank in the database:
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.tiff)
+
 ## License
 
 AppTemplate is released under the MIT license.  See the file [LICENSE](./LICENSE) for the full text.
