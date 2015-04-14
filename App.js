@@ -151,22 +151,17 @@ Ext.define('CustomApp', {
                     }
         });
 
-        var picard = Ext.create('Ext.Container', {
-            id: 'MakeItSo',
-            layout: {
-                type: 'vbox',
-                align: 'center'
-            }
-        });
 
-        picard.add( {
+        Ext.getCmp('headerBox').add( {
                 xtype: 'rallybutton',
-                text: 'Commit',
+                id: 'MakeItSo',
+                margin: 10,
+                text: 'Commit WSJF as Rank',
                 handler: this._storeRecords,
                 scope: this
         });
 
-        this.add(picard);
+
     },
 
     _recordToRank: 0,

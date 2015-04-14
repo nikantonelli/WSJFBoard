@@ -161,21 +161,23 @@ Ext.define('CustomApp', {
         });
 
         var picard = Ext.create('Ext.Container', {
-            id: 'MakeItSo',
-            layout: {
-                type: 'vbox',
-                align: 'center'
-            }
+            id: 'MakeItSo'
+//            layout: {
+//                type: 'vbox',
+//                align: 'right'
+//            }
         });
 
         picard.add( {
                 xtype: 'rallybutton',
+                id: 'MakeItSo',
                 text: 'Commit',
                 handler: this._storeRecords,
-                scope: this
+                scope: this,
+                margin: 10
         });
 
-        this.add(picard);
+        Ext.getCmp('headerBox').add(picard);
     },
 
     _recordToRank: 0,
