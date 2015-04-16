@@ -183,10 +183,16 @@ Ext.define('CustomApp', {
                 pageSize: 200,
                 batchAction: true,
                 model: modelNames,
-                sorters: {
-                    property: 'wsjfScore',
-                    direction: 'DESC'
-                },
+                sorters: [
+                    {
+                        property: 'wsjfScore',
+                        direction: 'DESC'
+                    },
+                    {
+                        property: 'DragAndDropRank',
+                        direction: 'ASC'
+                    }
+                ],
                 fetch: ['FormattedID', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
                 filters: app._getTimeBoxFilter()
             },
