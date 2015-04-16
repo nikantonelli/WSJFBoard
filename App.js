@@ -106,11 +106,24 @@ Ext.define('CustomApp', {
 
     _getTimeBoxFilter: function() {
         var filters = [];
-        var timeboxscope = this.getContext().getTimeboxScope();
-        if (timeboxscope) {
-            var filterQuery = timeboxscope.getQueryFilter();
-            if (filterQuery.value){
-                filters.push(filterQuery.value.config);
+
+        // We do not have timeboxes on higher level portfolio items
+
+        if ( Ext.getCmp('itemType').getRecord().data.Ordinal === 0) {
+            var timeboxscope = this.getContext().getTimeboxScope();
+            if (timeboxscope) {
+                var filterQuery = timeboxscope.getQueryFilter();
+                if (filterQuery.value){
+                    filters.push(filterQuery.value.config);
+                }
+                else {
+                    filters.push({
+                            property: 'Release',
+                            operator: '=',
+                            value: null
+
+                    });
+                }
             }
         }
 
@@ -165,7 +178,7 @@ Ext.define('CustomApp', {
                     property: 'wsjfScore',
                     direction: 'DESC'
                 },
-                fetch: ['FormattedID', 'Name', 'Release[Name]', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
                 filters: app._getTimeBoxFilter()
             },
             sortableColumns: false, //We will auto sort on WSJF number,
