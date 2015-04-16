@@ -15,6 +15,10 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
              xtype: 'wsjfBulkSetTime',
              id: 'wsjfBulkSetTime'
         });
+        items.push({
+             xtype: 'wsjfBulkSetSize',
+             id: 'wsjfBulkSetSize'
+        });
 
         _.each(items, function (item) {
             Ext.apply(item, {
@@ -489,6 +493,83 @@ Ext.define('wsjfBulkSetTime', {
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('timeChooser').destroy();
+                                    }
+                            });
+                        });
+                    },
+                    scope: this
+                }
+            ]
+        });
+    }
+});
+Ext.define('wsjfBulkSetSize', {
+    extend:  Rally.ui.menu.bulk.MenuItem ,
+    alias: 'widget.wsjfBulkSetSize',
+
+    config: {
+        text: 'Job Size',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetSize(arg1, arg2, arg3);
+        }
+    },
+
+    _onSetSize: function(arg1, arg2, arg3) {
+        var data = {
+            dataValues: [
+                { 'Name':'None', 'Value': 1 },
+                { 'Name':'Minimal', 'Value': 3 },
+                { 'Name':'Low', 'Value': 5 },
+                { 'Name':'Medium', 'Value': 8 },
+                { 'Name':'High', 'Value': 13 },
+                { 'Name':'Extreme', 'Value': 21 }
+            ]
+        };
+
+        var store = Ext.create('Ext.data.Store', {
+            autoLoad: true,
+            model: 'dataModel',
+            data: data,
+            proxy: {
+                type: 'memory',
+                reader: {
+                    type: 'json',
+                    root: 'dataValues'
+                }
+            }
+        });
+
+        var sizeBox = Ext.create( 'Ext.form.ComboBox', {
+            id: 'sizeBox',
+            store: store,
+            queryMode: 'local',
+            displayField: 'Name',
+            valueField: 'Value'
+        });
+
+        var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
+            id: 'sizeChooser',
+            autoShow: true,
+            draggable: true,
+            width: 300,
+            records: this.records,
+            title: 'Choose Job Size',
+            items: sizeBox,
+            buttons: [
+                {   text: 'OK',
+                    handler: function(arg1, arg2, arg3) {
+                        _.each(this.records, function(record) {
+                            record.set('JobSize', Ext.getCmp('sizeBox').value);
+                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+
+                            //if the field is 'decimal' you can only have two decimal places....
+                            record.set('WSJFScore', num.toFixed(2));
+                            record.save( {
+                                    callback: function() {
+                                        if (Ext.getCmp('sortCheck').value === true){
+                                            Ext.getCmp('piGrid').refresh();
+                                        }
+                                        Ext.getCmp('sizeChooser').destroy();
                                     }
                             });
                         });
