@@ -41,10 +41,36 @@
 
 
 Ext.define('CustomApp', {
-    extend: 'Rally.app.App',
+    extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
-    items:[
-        { xtype: 'container',
+
+    scopeType: 'release',
+
+//    items:[
+//        { xtype: 'container',
+//            id: 'headerBox',
+//            layout: 'column',
+//            border: 5,
+//            style: {
+//                borderColor: Rally.util.Colors.cyan,
+//                borderStyle: 'solid'
+//            }
+//        }
+//    ],
+
+    onTimeboxScopeChange: function(newTimeboxScope) {
+        this.callParent(arguments);
+
+
+        this._startApp(this);
+    },
+
+    launch: function() {
+
+        var context = this.getContext();
+        var app = this;
+
+        this.add( { xtype: 'container',
             id: 'headerBox',
             layout: 'column',
             border: 5,
@@ -53,12 +79,7 @@ Ext.define('CustomApp', {
                 borderStyle: 'solid'
             }
         }
-    ],
-
-    launch: function() {
-
-        var context = this.getContext();
-        var app = this;
+        );
 
         //Add the option to auto-sort or not
         Ext.getCmp('headerBox').add( {
@@ -76,17 +97,49 @@ Ext.define('CustomApp', {
             id: 'itemType',
             margin: 10,
             listeners: {
-                ready: function() { app._startApp(app); }
+                ready: function() { app._startApp(app); },
+                select: function() { app._startApp(app); }
             },
             scope: this
         });
 
+        Ext.getCmp('headerBox').add( {
+                xtype: 'rallybutton',
+                id: 'MakeItSo',
+                margin: 10,
+                text: 'Commit WSJF as Rank',
+                handler: this._storeRecords,
+                scope: this
+        });
+    },
+
+    _getTimeBoxFilter: function() {
+        var filters = [];
+        var timeboxscope = this.getContext().getTimeboxScope();
+        if (timeboxscope) {
+            var filterQuery = timeboxscope.getQueryFilter();
+            if (filterQuery.value){
+                filters.push(filterQuery.value.config);
+            }
+        }
+
+        filters.push({
+                        property: 'State.Name',
+                        operator: '!=',
+                        value: 'Done'
+                    });
+
+        return filters;
     },
 
     _startApp: function(app) {
 
         var modeltype = 'portfolioitem/' + Ext.getCmp('itemType').rawValue;
         var modelNames = [modeltype];
+
+        var oldGrid = Ext.getCmp('piGrid');
+
+        if (oldGrid) oldGrid.destroy();
 
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
@@ -96,6 +149,7 @@ Ext.define('CustomApp', {
                 'FormattedID',
                 'Name',
                 'Project',
+                'Release.Name',
                 'RROEValue',
                 'UserBusinessValue',
                 'TimeCriticality',
@@ -120,14 +174,8 @@ Ext.define('CustomApp', {
                     property: 'wsjfScore',
                     direction: 'DESC'
                 },
-                fetch: ['FormattedID', 'Name', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
-                filters: [
-                    {
-                        property: 'State.Name',
-                        operator: '!=',
-                        value: 'Done'
-                    }
-                ]
+                fetch: ['FormattedID', 'Name', 'Release[Name]', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                filters: app._getTimeBoxFilter()
             },
             sortableColumns: false, //We will auto sort on WSJF number,
             listeners: {
@@ -151,25 +199,6 @@ Ext.define('CustomApp', {
         //Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
 
         this.add(grid);
-
-        Ext.getCmp('itemType').on( {
-                change: function() {
-                    Ext.getCmp('piGrid').destroy();
-                    Ext.getCmp('MakeItSo').destroy();
-                    app._startApp(app);
-                    }
-        });
-
-
-        Ext.getCmp('headerBox').add( {
-                xtype: 'rallybutton',
-                id: 'MakeItSo',
-                margin: 10,
-                text: 'Commit WSJF as Rank',
-                handler: this._storeRecords,
-                scope: this
-        });
-
 
     },
 
