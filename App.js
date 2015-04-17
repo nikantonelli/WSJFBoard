@@ -85,6 +85,29 @@ Ext.define('CustomApp', {
             margin: 10
         });
 
+        //We should prevent re-ordering of rank if we have sub-sampled by release
+        //It makes for a confusing result otherwise
+        var timeboxscope = this.getContext().getTimeboxScope();
+            if (!timeboxscope) {
+                //Add the option to commit first record to top of global rank.
+                Ext.getCmp('headerBox').add( {
+                    xtype: 'rallycheckboxfield',
+                    fieldLabel: 'Override global rank',
+                    id: 'globalCheck',
+                    value: false,
+                    margin: 10
+                });
+
+                Ext.getCmp('headerBox').add( {
+                    xtype: 'rallybutton',
+                    id: 'MakeItSo',
+                    margin: 10,
+                    text: 'Commit WSJF as Rank',
+                    handler: this._storeRecords,
+                    scope: this
+                });
+            }
+
         Ext.getCmp('headerBox').add( {
             xtype: 'rallyportfolioitemtypecombobox',
             labelWidth: 150,
@@ -98,14 +121,6 @@ Ext.define('CustomApp', {
             scope: this
         });
 
-        Ext.getCmp('headerBox').add( {
-                xtype: 'rallybutton',
-                id: 'MakeItSo',
-                margin: 10,
-                text: 'Commit WSJF as Rank',
-                handler: this._storeRecords,
-                scope: this
-        });
     },
 
     _getTimeBoxFilter: function() {
@@ -226,14 +241,22 @@ Ext.define('CustomApp', {
         this._recordToRank = 0;
         this._rankingRecord = this._store.data.items[this._recordToRank];
 
-        this._rankingRecord.save( {
-            rankTo: 'TOP',
-            callback: function(arg1, arg2, arg3) {
-                this._recordToRank += 1;
-                this._saveNextRecord();
-            },
-            scope: this
-        });
+        if (Ext.getCmp('globalCheck').value === true){
+
+            this._rankingRecord.save( {
+                rankTo: 'TOP',
+                callback: function(arg1, arg2, arg3) {
+                    this._recordToRank += 1;
+                    this._saveNextRecord();
+                },
+                scope: this
+            });
+        }
+        else
+        {
+            this._recordToRank += 1;
+            this._saveNextRecord();
+        }
     },
 
     _saveNextRecord: function ()
