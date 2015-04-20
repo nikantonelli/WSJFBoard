@@ -129,6 +129,40 @@ Ext.define('CustomApp', {
             },
             scope: this
         });
+//
+//        Ext.getCmp('headerBox').add( {
+//            xtype: 'rallycheckboxfield',
+//            fieldLabel: 'Show Help',
+//            id: 'helpButton',
+//            margin: 10,
+//            listeners: {
+//                change: function() {
+//                    if (this.value === true) {
+//                        Ext.getCmp('helptext').show();
+//                    } else {
+//                        Ext.getCmp('helptext').hide();
+//                    }
+//                }
+//            },
+//            scope: this
+//        });
+//
+//        var helptext = Ext.create('Rally.ui.dialog.Dialog', {
+//             autoShow: true,
+//             hidden: true,
+//             id: 'helptext',
+//             draggable: true,
+//             width: 300,
+//             title: 'Brief Help',
+//             items: {
+//                 xtype: 'component',
+//                 html: 'WSJF = (Risk + Value + Urgency)/Size',
+//                 padding: 10
+//             }
+//         });
+//
+//        Ext.getCmp('headerBox').add( helptext );
+//
 
     },
 
@@ -180,13 +214,36 @@ Ext.define('CustomApp', {
             columnCfgs: [
                 'FormattedID',
                 'Name',
-                'Project',
-                'Release.Name',
-                'RROEValue',
-                'UserBusinessValue',
-                'TimeCriticality',
-                'JobSize',
-                'WSJFScore'
+                {
+                    dataIndex: 'Project',
+                    text: 'Project',
+                    align: 'center'
+                },
+                {
+                    dataIndex: 'RROEValue',
+                    text: 'RR/OE',
+                    align: 'center'
+                },
+                {
+                    dataIndex: 'UserBusinessValue',
+                    text: 'User/Business Value',
+                    align: 'center'
+                },
+                {
+                    dataIndex: 'TimeCriticality',
+                    text: 'Time Criticality',
+                    align: 'center'
+                },
+                {
+                    dataIndex: 'JobSize',
+                    text: 'Size',
+                    align: 'center'
+                },
+                {
+                    dataIndex: 'WSJFScore',
+                    text: 'WSJF',
+                    align: 'center'
+                }
             ],
             bulkEditConfig: {
                 showEdit: false,
@@ -197,6 +254,8 @@ Ext.define('CustomApp', {
             context: this.getContext(),
             enableBulkEdit: true,
             enableRanking: true,
+            enableColumnResize: true,
+            sortableColumns: true,
 
             storeConfig: {
                 pageSize: 200,
@@ -215,7 +274,7 @@ Ext.define('CustomApp', {
                 fetch: ['FormattedID', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
                 filters: app._getTimeBoxFilter()
             },
-            sortableColumns: false, //We will auto sort on WSJF number,
+            
             listeners: {
                 inlineeditsaved: function( grid, record, opts) {
                     var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
@@ -549,12 +608,13 @@ Ext.define('wsjfBulkSetSize', {
     _onSetSize: function(arg1, arg2, arg3) {
         var data = {
             dataValues: [
-                { 'Name':'None', 'Value': 1 },
-                { 'Name':'Minimal', 'Value': 3 },
-                { 'Name':'Low', 'Value': 5 },
-                { 'Name':'Medium', 'Value': 8 },
-                { 'Name':'High', 'Value': 13 },
-                { 'Name':'Extreme', 'Value': 21 }
+                { 'Name':'XS', 'Value': 1 },
+                { 'Name':'S', 'Value': 2 },
+                { 'Name':'M', 'Value': 3 },
+                { 'Name':'L', 'Value': 5 },
+                { 'Name':'XL', 'Value': 8 },
+                { 'Name':'XXL', 'Value': 13 },
+                { 'Name':'XXXL', 'Value': 21 }
             ]
         };
 
