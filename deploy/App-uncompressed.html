@@ -337,7 +337,6 @@ Ext.define('CustomApp', {
                 inlineeditsaved: function( grid, record, opts) {
                     var num = 0;
                     if (app.getSetting('usePrelim')) {
-                    debugger;
                          num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate')._p;
                     } else {
                          num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
