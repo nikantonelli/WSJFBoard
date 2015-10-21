@@ -4,6 +4,10 @@ WSJFBoard
 ## Overview
 Grid board to calculate WSJF from Risk, Value, TimeCriticality and JobSize and re-rank within Rally.  Add to a board with a Release filter in it's options to show lowest level Portfolio Item types with a 'Release' timebox setting.
 
+Portfolio Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
+
+If any filter is applied (i.e. via query box or by using a page filtered by release) the ability to commit the rank is removed. This is a safety feature to avoid time consuming mistakes (and not a bug)!
+
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/overview.jpg)
 
 ## Features
