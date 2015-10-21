@@ -40,25 +40,52 @@ Ext.define('CustomApp', {
     componentCls: 'app',
 
     scopeType: 'release',
+    settingsScope: 'project',
 
-//    items:[
-//        { xtype: 'container',
-//            id: 'headerBox',
-//            layout: 'column',
-//            border: 5,
-//            style: {
-//                borderColor: Rally.util.Colors.cyan,
-//                borderStyle: 'solid'
-//            }
-//        }
-//    ],
+    stateful: true,
 
     onTimeboxScopeChange: function(newTimeboxScope) {
         this.callParent(arguments);
-
-
         this._startApp(this);
     },
+
+    getSettingsFields: function() {
+        return [
+            {
+                xtype: 'textarea',
+                fieldLabel: 'Query',
+                name: 'query',
+                anchor: '100%',
+                cls: 'query-field',
+                margin: '0 70 0 0',
+                plugins: [
+                    {
+                        ptype: 'rallyhelpfield',
+                        helpId: 194
+                    },
+                    'rallyfieldvalidationui'
+                ],
+                validateOnBlur: false,
+                validateOnChange: false,
+                validator: function(value) {
+                    try {
+                        if (value) {
+                            Rally.data.wsapi.Filter.fromQueryString(value);
+                        }
+                        return true;
+                    } catch (e) {
+                        return e.message;
+                    }
+                }
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Use Preliminary Estimate',
+                name: 'usePrelim'
+            }
+        ];
+    },
+
 
     launch: function() {
 
@@ -157,7 +184,7 @@ Ext.define('CustomApp', {
 
     },
 
-    _getTimeBoxFilter: function() {
+    _getFilters: function(app) {
         var filters = [];
 
         // We do not have timeboxes on higher level portfolio items
@@ -186,6 +213,16 @@ Ext.define('CustomApp', {
                         value: 'Done'
                     });
 
+        //Now get the settings query box and apply those settings
+        var queryString = app.getSetting('query');
+        if (queryString) {
+            Ext.getCmp('MakeItSo').hide();  //Don't allow committing if subselected
+            Ext.getCmp('globalCheck').hide();
+            var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
+            filterObj.itemId = filterObj.toString();
+            filters.push( filterObj );
+        }
+
         return filters;
     },
 
@@ -198,11 +235,7 @@ Ext.define('CustomApp', {
 
         if (oldGrid) oldGrid.destroy();
 
-        var grid = Ext.create('Rally.ui.grid.Grid', {
-            id: 'piGrid',
-            margin: 30,
-
-            columnCfgs: [
+        var columnCfgs = [
                 'FormattedID',
                 'Name',
                 {
@@ -224,18 +257,43 @@ Ext.define('CustomApp', {
                     dataIndex: 'TimeCriticality',
                     text: 'Time Criticality',
                     align: 'center'
-                },
+                }
+        ];
+
+        // If we are using preliminary estimate, pick up that instead.
+
+        if (app.getSetting('usePrelim')) {
+            columnCfgs.push(
+                {
+                    dataIndex: 'PreliminaryEstimate',
+                    text: 'Size',
+                    align: 'center'
+                });
+        } else {
+            columnCfgs.push(
                 {
                     dataIndex: 'JobSize',
                     text: 'Size',
                     align: 'center'
-                },
+                });
+
+        }
+
+        columnCfgs.push(
                 {
                     dataIndex: 'WSJFScore',
                     text: 'WSJF',
                     align: 'center'
-                }
-            ],
+                });
+
+
+
+        var grid = Ext.create('Rally.ui.grid.Grid', {
+            id: 'piGrid',
+            margin: 30,
+
+            columnCfgs: columnCfgs,
+
             bulkEditConfig: {
                 showEdit: false,
                 showTag: false,
@@ -262,13 +320,18 @@ Ext.define('CustomApp', {
                         direction: 'ASC'
                     }
                 ],
-                fetch: ['FormattedID', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
-                filters: app._getTimeBoxFilter()
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                filters: app._getFilters(app)
             },
             
             listeners: {
                 inlineeditsaved: function( grid, record, opts) {
-                    var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+                    var num = 0;
+                    if (app.getSetting('usePrelim')) {
+                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate')._p;
+                    } else {
+                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+                    }
 
                     //if the field is 'decimal' you can only have two decimal places....
                     record.set('WSJFScore', num.toFixed(2));
