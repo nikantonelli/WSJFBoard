@@ -108,7 +108,7 @@ Ext.define('CustomApp', {
             xtype: 'rallycheckboxfield',
             fieldLabel: 'Auto-sort on change',
             id: 'sortCheck',
-            value: false,
+            value: true,
             margin: 10
         });
 
