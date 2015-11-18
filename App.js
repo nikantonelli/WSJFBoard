@@ -88,7 +88,7 @@ Ext.define('CustomApp', {
                 xtype: 'rallycheckboxfield',
                 fieldLabel: 'Overwrite WSJF on load',
                 labelWidth: 200,
-                name: 'useOverLoad'
+                name: 'useWSJFOverLoad'
             },
             {
                 xtype: 'rallycheckboxfield',
@@ -365,7 +365,9 @@ Ext.define('CustomApp', {
                 var oldVal = record.get('WSJFScore').toFixed(2);
 
                 if (app.getSetting('usePrelim')) {
-                     num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate').Value;
+                    if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
+                        num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate').Value;
+                    }
                 } else {
                      num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
                 }
