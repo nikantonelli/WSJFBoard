@@ -81,7 +81,20 @@ Ext.define('CustomApp', {
             {
                 xtype: 'rallycheckboxfield',
                 fieldLabel: 'Use Preliminary Estimate',
+                labelWidth: 200,
                 name: 'usePrelim'
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Overwrite WSJF on load',
+                labelWidth: 200,
+                name: 'useOverLoad'
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Make WSJF field read-only',
+                labelWidth: 200,
+                name: 'useWSJFReadOnly'
             }
         ];
     },
@@ -278,13 +291,23 @@ Ext.define('CustomApp', {
                 });
 
         }
+        if (app.getSetting('useWSJFReadOnly')) {
 
-        columnCfgs.push(
+            columnCfgs.push(
+                {
+                    dataIndex: 'WSJFScore',
+                    text: 'WSJF',
+                    align: 'center',
+                    editor: null
+                });
+        }else {
+            columnCfgs.push(
                 {
                     dataIndex: 'WSJFScore',
                     text: 'WSJF',
                     align: 'center'
                 });
+        }
 
 
 
@@ -329,8 +352,11 @@ Ext.define('CustomApp', {
                     this._saveWSJF(record);
                 },
                 load: function(store) {
-                    var records = store.getRecords();
-                    _.each(records, this._saveWSJF);
+                    if (app.getSetting('useWSJFOverLoad')) {
+
+                        var records = store.getRecords();
+                        _.each(records, this._saveWSJF);
+                    }
                 }
             },
 
@@ -348,7 +374,9 @@ Ext.define('CustomApp', {
                 num = num.toFixed(2);
 
                 if ( num !== oldVal) {
-                    record.set('WSJFScore', num);
+                    if ( app.getSetting('useWSJFReadOnly') === false) {
+                        record.set('WSJFScore', num);
+                    }
                     record.save( {
                         callback: function() {
                             if (Ext.getCmp('sortCheck').value === true){
