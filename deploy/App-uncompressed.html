@@ -321,7 +321,7 @@ Ext.define('CustomApp', {
                 model: modelNames,
                 sorters: [
                     {
-                        property: 'wsjfScore',
+                        property: 'WSJFScore',
                         direction: 'DESC'
                     },
                     {
@@ -335,15 +335,29 @@ Ext.define('CustomApp', {
             
             listeners: {
                 inlineeditsaved: function( grid, record, opts) {
-                    var num = 0;
-                    if (app.getSetting('usePrelim')) {
-                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate').Value;
-                    } else {
-                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
-                    }
+                    this._saveWSJF(record);
+                },
+                load: function(store) {
+                    var records = store.getRecords();
+                    _.each(records, this._saveWSJF);
+                }
+            },
 
-                    //if the field is 'decimal' you can only have two decimal places....
-                    record.set('WSJFScore', num.toFixed(2));
+            _saveWSJF: function(record) {
+                var num = 0;
+                var oldVal = record.get('WSJFScore').toFixed(2);
+
+                if (app.getSetting('usePrelim')) {
+                     num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('PreliminaryEstimate').Value;
+                } else {
+                     num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
+                }
+
+                //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
+                num = num.toFixed(2);
+
+                if ( num !== oldVal) {
+                    record.set('WSJFScore', num);
                     record.save( {
                         callback: function() {
                             if (Ext.getCmp('sortCheck').value === true){
@@ -356,7 +370,7 @@ Ext.define('CustomApp', {
 
         });
 
-        //Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
+        Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
 
         this.add(grid);
 
