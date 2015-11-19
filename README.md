@@ -33,6 +33,20 @@ Commit of viewed WSJF table as rank in the database:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.jpg)
 
+## User settings
+
+By going to "Edit App Settings" from the gear in the top right hand corner:
+
+1. You can add a filter in the query box to sub-select various items. The app will prevent you from saving the rank if you do this - on purpose!
+
+2. You can ask the app to recalculate (and save) all WSJF numbers every time it opens from the source values
+
+3. You can stop users directly modifying the WSJF (to enforce the rule of setting the source values)
+
+4. You can use either the 'JobSize' field or the 'Preliminary Estimate' (T-Shirt sizing).
+
+If you change from JobSize to PrelimEst and set the 'recalculate' checkbox, the app will rework the numbers accordingly.
+
 ## Caveat!
 
 The current version only re-ranks the number of rows shown in the table. Set to 200 for the most re-ranked in one go
