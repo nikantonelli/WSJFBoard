@@ -131,29 +131,6 @@ Ext.define('CustomApp', {
         }
         );
 
-        //We should prevent re-ordering of rank if we have sub-sampled by release
-        //It makes for a confusing result otherwise
-        var timeboxscope = this.getContext().getTimeboxScope();
-            if (!timeboxscope) {
-                //Add the option to commit first record to top of global rank.
-                Ext.getCmp('headerBox').add( {
-                    xtype: 'rallycheckboxfield',
-                    fieldLabel: 'Override global rank',
-                    id: 'globalCheck',
-                    value: false,
-                    margin: 10
-                });
-
-                Ext.getCmp('headerBox').add( {
-                    xtype: 'rallybutton',
-                    id: 'MakeItSo',
-                    margin: 10,
-                    text: 'Commit WSJF as Rank',
-                    handler: this._storeRecords,
-                    scope: this
-                });
-            }
-
         Ext.getCmp('headerBox').add( {
             xtype: 'rallyportfolioitemtypecombobox',
             labelWidth: 150,
@@ -164,8 +141,34 @@ Ext.define('CustomApp', {
                 ready: function() { app._startApp(app); },
                 select: function() { app._startApp(app); }
             },
-            scope: this
+            scope: this,
+            align: 'left'
         });
+
+        //We should prevent re-ordering of rank if we have sub-sampled by release
+        //It makes for a confusing result otherwise
+        var timeboxscope = this.getContext().getTimeboxScope();
+            if (!timeboxscope) {
+                Ext.getCmp('headerBox').add( {
+                    xtype: 'rallybutton',
+                    id: 'MakeItSo',
+                    margin: 10,
+                    text: 'Commit WSJF as Rank',
+                    handler: this._storeRecords,
+                    scope: this
+                });
+
+                //Add the option to commit first record to top of global rank.
+                Ext.getCmp('headerBox').add( {
+                    xtype: 'rallycheckboxfield',
+                    fieldLabel: 'Override global rank',
+                    id: 'globalCheck',
+                    value: false,
+                    margin: 10
+                });
+
+            }
+
 //
 //        Ext.getCmp('headerBox').add( {
 //            xtype: 'rallycheckboxfield',

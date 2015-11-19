@@ -122,6 +122,20 @@ Ext.define('CustomApp', {
         }
         );
 
+        Ext.getCmp('headerBox').add( {
+            xtype: 'rallyportfolioitemtypecombobox',
+            labelWidth: 150,
+            fieldLabel: 'Choose portfolio type:',
+            id: 'itemType',
+            margin: 10,
+            listeners: {
+                ready: function() { app._startApp(app); },
+                select: function() { app._startApp(app); }
+            },
+            scope: this,
+            align: 'left'
+        });
+
         //We should prevent re-ordering of rank if we have sub-sampled by release
         //It makes for a confusing result otherwise
         var timeboxscope = this.getContext().getTimeboxScope();
@@ -146,18 +160,6 @@ Ext.define('CustomApp', {
 
             }
 
-        Ext.getCmp('headerBox').add( {
-            xtype: 'rallyportfolioitemtypecombobox',
-            labelWidth: 150,
-            fieldLabel: 'Choose portfolio type:',
-            id: 'itemType',
-            margin: 10,
-            listeners: {
-                ready: function() { app._startApp(app); },
-                select: function() { app._startApp(app); }
-            },
-            scope: this
-        });
 //
 //        Ext.getCmp('headerBox').add( {
 //            xtype: 'rallycheckboxfield',
