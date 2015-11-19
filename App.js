@@ -95,6 +95,12 @@ Ext.define('CustomApp', {
                 fieldLabel: 'Make WSJF field read-only',
                 labelWidth: 200,
                 name: 'useWSJFReadOnly'
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Auto-sort on change',
+                labelWidth: 200,
+                name: 'useWSJFAutoSort'
             }
         ];
     },
@@ -116,19 +122,19 @@ Ext.define('CustomApp', {
         }
         );
 
-        //Add the option to auto-sort or not
-        Ext.getCmp('headerBox').add( {
-            xtype: 'rallycheckboxfield',
-            fieldLabel: 'Auto-sort on change',
-            id: 'sortCheck',
-            value: true,
-            margin: 10
-        });
-
         //We should prevent re-ordering of rank if we have sub-sampled by release
         //It makes for a confusing result otherwise
         var timeboxscope = this.getContext().getTimeboxScope();
             if (!timeboxscope) {
+                Ext.getCmp('headerBox').add( {
+                    xtype: 'rallybutton',
+                    id: 'MakeItSo',
+                    margin: 10,
+                    text: 'Commit WSJF as Rank',
+                    handler: this._storeRecords,
+                    scope: this
+                });
+
                 //Add the option to commit first record to top of global rank.
                 Ext.getCmp('headerBox').add( {
                     xtype: 'rallycheckboxfield',
@@ -138,14 +144,6 @@ Ext.define('CustomApp', {
                     margin: 10
                 });
 
-                Ext.getCmp('headerBox').add( {
-                    xtype: 'rallybutton',
-                    id: 'MakeItSo',
-                    margin: 10,
-                    text: 'Commit WSJF as Rank',
-                    handler: this._storeRecords,
-                    scope: this
-                });
             }
 
         Ext.getCmp('headerBox').add( {
@@ -376,12 +374,10 @@ Ext.define('CustomApp', {
                 num = num.toFixed(2);
 
                 if ( num !== oldVal) {
-                    if ( app.getSetting('useWSJFReadOnly') === false) {
-                        record.set('WSJFScore', num);
-                    }
+                    record.set('WSJFScore', num);
                     record.save( {
                         callback: function() {
-                            if (Ext.getCmp('sortCheck').value === true){
+                            if (app.getSetting('useWSJFAutoSort')){
                                 Ext.getCmp('piGrid').refresh();
                             }
                         }
@@ -521,7 +517,7 @@ Ext.define('wsjfBulkSetRisk', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (Ext.getCmp('sortCheck').value === true){
+                                        if (app.getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
 
@@ -600,7 +596,7 @@ Ext.define('wsjfBulkSetValue', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (Ext.getCmp('sortCheck').value === true){
+                                        if (app.getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('valueChooser').destroy();
@@ -678,7 +674,7 @@ Ext.define('wsjfBulkSetTime', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (Ext.getCmp('sortCheck').value === true){
+                                        if (app.getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('timeChooser').destroy();
@@ -756,7 +752,7 @@ Ext.define('wsjfBulkSetSize', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (Ext.getCmp('sortCheck').value === true){
+                                        if (app.getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('sizeChooser').destroy();
