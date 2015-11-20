@@ -39,6 +39,8 @@ Ext.define('CustomApp', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
 
+    id: 'wsjfApp',
+
     scopeType: 'release',
     settingsScope: 'project',
 
@@ -519,7 +521,7 @@ Ext.define('wsjfBulkSetRisk', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (app.getSetting('useWSJFAutoSort')){
+                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
 
@@ -598,7 +600,7 @@ Ext.define('wsjfBulkSetValue', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (app.getSetting('useWSJFAutoSort')){
+                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('valueChooser').destroy();
@@ -676,7 +678,7 @@ Ext.define('wsjfBulkSetTime', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (app.getSetting('useWSJFAutoSort')){
+                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('timeChooser').destroy();
@@ -754,7 +756,7 @@ Ext.define('wsjfBulkSetSize', {
                             record.set('WSJFScore', num.toFixed(2));
                             record.save( {
                                     callback: function() {
-                                        if (app.getSetting('useWSJFAutoSort')){
+                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
                                         Ext.getCmp('sizeChooser').destroy();
