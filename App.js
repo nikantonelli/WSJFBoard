@@ -15,10 +15,13 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
              xtype: 'wsjfBulkSetTime',
              id: 'wsjfBulkSetTime'
         });
-        items.push({
-             xtype: 'wsjfBulkSetSize',
-             id: 'wsjfBulkSetSize'
-        });
+
+        if (Ext.getCmp('wsjfApp').getSetting('usePrelim') === false){
+            items.push({
+                 xtype: 'wsjfBulkSetSize',
+                 id: 'wsjfBulkSetSize'
+            });
+        }
 
         _.each(items, function (item) {
             Ext.apply(item, {
@@ -40,6 +43,10 @@ Ext.define('CustomApp', {
     componentCls: 'app',
 
     id: 'wsjfApp',
+
+    config: {
+        scrollFlags:  { 'both': false,  'overflowY': 'no',  'overflowX': 'auto',  'y': false ,  'x': true }
+    },
 
     scopeType: 'release',
     settingsScope: 'project',
@@ -103,6 +110,18 @@ Ext.define('CustomApp', {
                 fieldLabel: 'Auto-sort on change',
                 labelWidth: 200,
                 name: 'useWSJFAutoSort'
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Show State Field',
+                labelWidth: 200,
+                name: 'useStateField'
+            },
+            {
+                xtype: 'rallycheckboxfield',
+                fieldLabel: 'Show Project Field',
+                labelWidth: 200,
+                name: 'useProjectField'
             }
         ];
     },
@@ -112,6 +131,7 @@ Ext.define('CustomApp', {
 
         var context = this.getContext();
         var app = this;
+
 
         this.add( { xtype: 'container',
             id: 'headerBox',
@@ -252,70 +272,134 @@ Ext.define('CustomApp', {
 
         var columnCfgs = [
                 'FormattedID',
-                'Name',
+                'Name'
+        ];
+
+        if (app.getSetting('useStateField')) {
+            columnCfgs.push(
+                {
+                    dataIndex: 'State',
+                    text: 'State',
+                    align: 'center'
+                });
+        }
+
+        if (app.getSetting('useProjectField')) {
+            columnCfgs.push(
                 {
                     dataIndex: 'Project',
                     text: 'Project',
                     align: 'center'
-                },
+                });
+        }
+
+        columnCfgs.push(
                 {
                     dataIndex: 'RROEValue',
-                    text: 'RR/OE',
-                    align: 'center'
+                    text: 'Upside',
+                    align: 'center',
+                    listeners: {
+                        afterrender: function() {
+                            thisMenu = Ext.create('wsjfBulkSetRisk');
+                            helpHTML = thisMenu.getHelp();
+                            Ext.create('Rally.ui.tooltip.ToolTip', {
+                                target : this.getEl(),
+                                html: helpHTML
+                            });
+                        }
+                    }
                 },
                 {
                     dataIndex: 'UserBusinessValue',
-                    text: 'User/Business Value',
-                    align: 'center'
+                    text: 'Derived Value',
+                    align: 'center',
+                    listeners: {
+                        afterrender: function() {
+                            thisMenu = Ext.create('wsjfBulkSetValue');
+                            helpHTML = thisMenu.getHelp();
+                            Ext.create('Rally.ui.tooltip.ToolTip', {
+                                target : this.getEl(),
+                                html: helpHTML
+                            });
+                        }
+                    }
                 },
                 {
                     dataIndex: 'TimeCriticality',
-                    text: 'Time Criticality',
-                    align: 'center'
+                    text: 'Urgency',
+                    align: 'center',
+                    listeners: {
+                        afterrender: function() {
+                            thisMenu = Ext.create('wsjfBulkSetTime');
+                            helpHTML = thisMenu.getHelp();
+                            Ext.create('Rally.ui.tooltip.ToolTip', {
+                                target : this.getEl(),
+                                html: helpHTML
+                            });
+                        }
+                    }
                 }
-        ];
+        );
+
+
+        sizeCol = {
+                    text: 'Effort',
+                    align: 'center',
+                    listeners: {
+                        afterrender: function() {
+                            thisMenu = Ext.create('wsjfBulkSetSize');
+                            helpHTML = thisMenu.getHelp();
+                            Ext.create('Rally.ui.tooltip.ToolTip', {
+                                target : this.getEl(),
+                                html: helpHTML
+                            });
+                        }
+                    }
+
+                };
 
         // If we are using preliminary estimate, pick up that instead.
 
         if (app.getSetting('usePrelim')) {
-            columnCfgs.push(
+            sizeCol = _.merge(sizeCol,
                 {
-                    dataIndex: 'PreliminaryEstimate',
-                    text: 'Size',
-                    align: 'center'
+                    dataIndex: 'PreliminaryEstimate'
                 });
         } else {
-            columnCfgs.push(
+            sizeCol = _.merge(sizeCol,
                 {
-                    dataIndex: 'JobSize',
-                    text: 'Size',
-                    align: 'center'
+                    dataIndex: 'JobSize'
                 });
-
         }
-        if (app.getSetting('useWSJFReadOnly')) {
 
-            columnCfgs.push(
-                {
+        columnCfgs.push( sizeCol);
+
+        wsjfCol =  {
                     dataIndex: 'WSJFScore',
                     text: 'WSJF',
                     align: 'center',
-                    editor: null
-                });
-        }else {
-            columnCfgs.push(
+                    listeners: {
+                        afterrender: function() {
+                            Ext.create('Rally.ui.tooltip.ToolTip', {
+                                target : this.getEl(),
+                                html: '<p><strong>WSJF = (Upside + Value + Urgency)/Effort</strong></p>'
+                            });
+                        }
+                    }
+                };
+
+        if (app.getSetting('useWSJFReadOnly')) {
+            wsjfCol = _.merge(wsjfCol,
                 {
-                    dataIndex: 'WSJFScore',
-                    text: 'WSJF',
-                    align: 'center'
+                    editor: null
                 });
         }
 
-
+        columnCfgs.push( wsjfCol);
 
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
-            margin: 30,
+            margin: 10,
 
             columnCfgs: columnCfgs,
 
@@ -391,7 +475,7 @@ Ext.define('CustomApp', {
 
         });
 
-        Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
+//        Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
 
         this.add(grid);
 
@@ -453,38 +537,58 @@ Ext.define('dataModel', {
     extend: 'Ext.data.Model',
     fields: [
         {name: 'Name',  type: 'string'  },
-        {name: 'Value', type: 'integer' }
+        {name: 'Value', type: 'integer' },
+        {name: 'Description', type: 'string' }
     ]
+});
+
+Ext.define('Rally.ui.grid.localWSJFBulkSet', {
+    extend:  Rally.ui.menu.bulk.MenuItem ,
+    alias: 'widget.localWSJFBulkSet',
+
+    _makeHelpFromData: function() {
+        html = '';
+
+        _.each( this.config.data, function(record) {
+            html += '<p>' + record.Name + '(' + record.Value + '):  ' + record.Description + '</p>';
+        });
+
+        return html;
+    },
+
+    getHelp: function() {
+        return (this._makeHelpFromData());
+    }
+
 });
 
 
 Ext.define('wsjfBulkSetRisk', {
-    extend:  Rally.ui.menu.bulk.MenuItem ,
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
     alias: 'widget.wsjfBulkSetRisk',
 
     config: {
         text: 'Risk',
         handler: function(arg1, arg2, arg3) {
             this._onSetRisk(arg1, arg2, arg3);
-        }
+        },
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No upside' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'Up to 5%' },
+                { 'Name':'Low', 'Value': 2, 'Description': '5% - 10%' },
+                { 'Name':'Medium', 'Value': 3, 'Description': '10% - 25%' },
+                { 'Name':'High', 'Value': 5, 'Description': '25% - 50%' },
+                { 'Name':'Very High', 'Value': 8, 'Description': '50% - 100%' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'More than double' }
+            ]
     },
 
     _onSetRisk: function(arg1, arg2, arg3) {
-        var data = {
-            dataValues: [
-                { 'Name':'None', 'Value': 1 },
-                { 'Name':'Minimal', 'Value': 3 },
-                { 'Name':'Low', 'Value': 5 },
-                { 'Name':'Medium', 'Value': 8 },
-                { 'Name':'High', 'Value': 13 },
-                { 'Name':'Extreme', 'Value': 21 }
-            ]
-        };
 
         var store = Ext.create('Ext.data.Store', {
             autoLoad: true,
             model: 'dataModel',
-            data: data,
+            data: this.config.data,
             proxy: {
                 type: 'memory',
                 reader: {
@@ -508,7 +612,7 @@ Ext.define('wsjfBulkSetRisk', {
             draggable: true,
             width: 300,
             records: this.records,
-            title: 'Choose Risk setting',
+            title: 'Choose Upside potential',
             items: riskBox,
             buttons: [
                 {   text: 'OK',
@@ -531,6 +635,10 @@ Ext.define('wsjfBulkSetRisk', {
                         });
                     },
                     scope: this
+                },
+                {
+                    text: 'Cancel',
+                    handler: function(){ Ext.getCmp('riskChooser').destroy(); }
                 }
             ]
         });
@@ -538,32 +646,31 @@ Ext.define('wsjfBulkSetRisk', {
 });
 
 Ext.define('wsjfBulkSetValue', {
-    extend:  Rally.ui.menu.bulk.MenuItem ,
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
     alias: 'widget.wsjfBulkSetValue',
 
     config: {
         text: 'Business Value',
         handler: function(arg1, arg2, arg3) {
             this._onSetValue(arg1, arg2, arg3);
-        }
+        },
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No value' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'Less than $10k' },
+                { 'Name':'Low', 'Value': 2, 'Description': '$10K - $25K' },
+                { 'Name':'Medium', 'Value': 3, 'Description': '$25K - $50K' },
+                { 'Name':'High', 'Value': 5, 'Description': '$50K - 100K' },
+                { 'Name':'Very High', 'Value': 8, 'Description': '$100K - $250K' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'Over $250K' }
+            ]
     },
 
     _onSetValue: function(arg1, arg2, arg3) {
-        var data = {
-            dataValues: [
-                { 'Name':'None', 'Value': 1 },
-                { 'Name':'Minimal', 'Value': 3 },
-                { 'Name':'Low', 'Value': 5 },
-                { 'Name':'Medium', 'Value': 8 },
-                { 'Name':'High', 'Value': 13 },
-                { 'Name':'Extreme', 'Value': 21 }
-            ]
-        };
 
         var store = Ext.create('Ext.data.Store', {
             autoLoad: true,
             model: 'dataModel',
-            data: data,
+            data: this.config.data,
             proxy: {
                 type: 'memory',
                 reader: {
@@ -609,6 +716,10 @@ Ext.define('wsjfBulkSetValue', {
                         });
                     },
                     scope: this
+                },
+                {
+                    text: 'Cancel',
+                    handler: function(){ Ext.getCmp('valueChooser').destroy(); }
                 }
             ]
         });
@@ -616,32 +727,32 @@ Ext.define('wsjfBulkSetValue', {
 });
 
 Ext.define('wsjfBulkSetTime', {
-    extend:  Rally.ui.menu.bulk.MenuItem ,
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
     alias: 'widget.wsjfBulkSetTime',
 
     config: {
         text: 'Time Criticality',
         handler: function(arg1, arg2, arg3) {
             this._onSetTime(arg1, arg2, arg3);
-        }
+        },
+
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No urgency' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'This year' },
+                { 'Name':'Low', 'Value': 2, 'Description': 'Within 6 months' },
+                { 'Name':'Medium', 'Value': 3, 'Description': 'This quarter' },
+                { 'Name':'High', 'Value': 5, 'Description': 'This month' },
+                { 'Name':'Very High', 'Value': 8, 'Description': 'This week' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'Immediately' }
+            ]
     },
 
     _onSetTime: function(arg1, arg2, arg3) {
-        var data = {
-            dataValues: [
-                { 'Name':'None', 'Value': 1 },
-                { 'Name':'Minimal', 'Value': 3 },
-                { 'Name':'Low', 'Value': 5 },
-                { 'Name':'Medium', 'Value': 8 },
-                { 'Name':'High', 'Value': 13 },
-                { 'Name':'Extreme', 'Value': 21 }
-            ]
-        };
 
         var store = Ext.create('Ext.data.Store', {
             autoLoad: true,
             model: 'dataModel',
-            data: data,
+            data: this.config.data,
             proxy: {
                 type: 'memory',
                 reader: {
@@ -687,39 +798,43 @@ Ext.define('wsjfBulkSetTime', {
                         });
                     },
                     scope: this
+                },
+                {
+                    text: 'Cancel',
+                    handler: function(){ Ext.getCmp('timeChooser').destroy(); }
                 }
             ]
         });
     }
 });
+
+
 Ext.define('wsjfBulkSetSize', {
-    extend:  Rally.ui.menu.bulk.MenuItem ,
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
     alias: 'widget.wsjfBulkSetSize',
 
     config: {
         text: 'Job Size',
         handler: function(arg1, arg2, arg3) {
             this._onSetSize(arg1, arg2, arg3);
-        }
+        },
+        data: [
+                { 'Name':'XS', 'Value': 1, 'Description': 'Less than 1 week' },
+                { 'Name':'S', 'Value': 2, 'Description': '1 - 3 weeks' },
+                { 'Name':'M', 'Value': 3, 'Description': '1 - 2 months' },
+                { 'Name':'L', 'Value': 5, 'Description': '3 - 6 months' },
+                { 'Name':'XL', 'Value': 8, 'Description': '6 - 9 months' },
+                { 'Name':'XXL', 'Value': 13, 'Description': '9 - 18 months' },
+                { 'Name':'XXXL', 'Value': 21, 'Description': 'Two years or more' }
+            ]
     },
 
     _onSetSize: function(arg1, arg2, arg3) {
-        var data = {
-            dataValues: [
-                { 'Name':'XS', 'Value': 1 },
-                { 'Name':'S', 'Value': 2 },
-                { 'Name':'M', 'Value': 3 },
-                { 'Name':'L', 'Value': 5 },
-                { 'Name':'XL', 'Value': 8 },
-                { 'Name':'XXL', 'Value': 13 },
-                { 'Name':'XXXL', 'Value': 21 }
-            ]
-        };
 
         var store = Ext.create('Ext.data.Store', {
             autoLoad: true,
             model: 'dataModel',
-            data: data,
+            data: this.config.data,
             proxy: {
                 type: 'memory',
                 reader: {
@@ -729,8 +844,8 @@ Ext.define('wsjfBulkSetSize', {
             }
         });
 
-        var sizeBox = Ext.create( 'Ext.form.ComboBox', {
-            id: 'sizeBox',
+        var localBox = Ext.create( 'Ext.form.ComboBox', {
+            id: 'localBox',
             store: store,
             queryMode: 'local',
             displayField: 'Name',
@@ -738,18 +853,18 @@ Ext.define('wsjfBulkSetSize', {
         });
 
         var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
-            id: 'sizeChooser',
+            id: 'localChooser',
             autoShow: true,
             draggable: true,
             width: 300,
             records: this.records,
             title: 'Choose Job Size',
-            items: sizeBox,
+            items: localBox,
             buttons: [
                 {   text: 'OK',
                     handler: function(arg1, arg2, arg3) {
                         _.each(this.records, function(record) {
-                            record.set('JobSize', Ext.getCmp('sizeBox').value);
+                            record.set('JobSize', Ext.getCmp('localBox').value);
                             var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
 
                             //if the field is 'decimal' you can only have two decimal places....
@@ -759,12 +874,16 @@ Ext.define('wsjfBulkSetSize', {
                                         if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
                                             Ext.getCmp('piGrid').refresh();
                                         }
-                                        Ext.getCmp('sizeChooser').destroy();
+                                        Ext.getCmp('localChooser').destroy();
                                     }
                             });
                         });
                     },
                     scope: this
+                },
+                {
+                    text: 'Cancel',
+                    handler: function(){ Ext.getCmp('localChooser').destroy(); }
                 }
             ]
         });
