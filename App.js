@@ -550,7 +550,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
         html = '';
 
         _.each( this.config.data, function(record) {
-            html += '<p>' + record.Name + '(' + record.Value + '):  ' + record.Description + '</p>';
+            html += '<p><strong>' + record.Name + '(' + record.Value + '):  ' + record.Description + '</strong></p>';
         });
 
         return html;
