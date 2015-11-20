@@ -556,280 +556,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
         return html;
     },
 
-    getHelp: function() {
-        return (this._makeHelpFromData());
-    }
-
-});
-
-
-Ext.define('wsjfBulkSetRisk', {
-    extend:  Rally.ui.grid.localWSJFBulkSet ,
-    alias: 'widget.wsjfBulkSetRisk',
-
-    config: {
-        text: 'Risk',
-        handler: function(arg1, arg2, arg3) {
-            this._onSetRisk(arg1, arg2, arg3);
-        },
-        data: [
-                { 'Name':'None', 'Value': 0, 'Description': 'No upside' },
-                { 'Name':'Minimal', 'Value': 1, 'Description': 'Up to 5%' },
-                { 'Name':'Low', 'Value': 2, 'Description': '5% - 10%' },
-                { 'Name':'Medium', 'Value': 3, 'Description': '10% - 25%' },
-                { 'Name':'High', 'Value': 5, 'Description': '25% - 50%' },
-                { 'Name':'Very High', 'Value': 8, 'Description': '50% - 100%' },
-                { 'Name':'Extreme', 'Value': 13, 'Description': 'More than double' }
-            ]
-    },
-
-    _onSetRisk: function(arg1, arg2, arg3) {
-
-        var store = Ext.create('Ext.data.Store', {
-            autoLoad: true,
-            model: 'dataModel',
-            data: this.config.data,
-            proxy: {
-                type: 'memory',
-                reader: {
-                    type: 'json',
-                    root: 'dataValues'
-                }
-            }
-        });
-
-        var riskBox = Ext.create( 'Ext.form.ComboBox', {
-            id: 'riskBox',
-            store: store,
-            queryMode: 'local',
-            displayField: 'Name',
-            valueField: 'Value'
-        });
-
-        var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
-            id: 'riskChooser',
-            autoShow: true,
-            draggable: true,
-            width: 300,
-            records: this.records,
-            title: 'Choose Upside potential',
-            items: riskBox,
-            buttons: [
-                {   text: 'OK',
-                    handler: function(arg1, arg2, arg3) {
-                        _.each(this.records, function(record) {
-                            record.set('RROEValue', Ext.getCmp('riskBox').value);
-                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
-
-                            //if the field is 'decimal' you can only have two decimal places....
-                            record.set('WSJFScore', num.toFixed(2));
-                            record.save( {
-                                    callback: function() {
-                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
-                                            Ext.getCmp('piGrid').refresh();
-                                        }
-
-                                        Ext.getCmp('riskChooser').destroy();
-                                    }
-                            });
-                        });
-                    },
-                    scope: this
-                },
-                {
-                    text: 'Cancel',
-                    handler: function(){ Ext.getCmp('riskChooser').destroy(); }
-                }
-            ]
-        });
-    }
-});
-
-Ext.define('wsjfBulkSetValue', {
-    extend:  Rally.ui.grid.localWSJFBulkSet ,
-    alias: 'widget.wsjfBulkSetValue',
-
-    config: {
-        text: 'Business Value',
-        handler: function(arg1, arg2, arg3) {
-            this._onSetValue(arg1, arg2, arg3);
-        },
-        data: [
-                { 'Name':'None', 'Value': 0, 'Description': 'No value' },
-                { 'Name':'Minimal', 'Value': 1, 'Description': 'Less than $10k' },
-                { 'Name':'Low', 'Value': 2, 'Description': '$10K - $25K' },
-                { 'Name':'Medium', 'Value': 3, 'Description': '$25K - $50K' },
-                { 'Name':'High', 'Value': 5, 'Description': '$50K - 100K' },
-                { 'Name':'Very High', 'Value': 8, 'Description': '$100K - $250K' },
-                { 'Name':'Extreme', 'Value': 13, 'Description': 'Over $250K' }
-            ]
-    },
-
-    _onSetValue: function(arg1, arg2, arg3) {
-
-        var store = Ext.create('Ext.data.Store', {
-            autoLoad: true,
-            model: 'dataModel',
-            data: this.config.data,
-            proxy: {
-                type: 'memory',
-                reader: {
-                    type: 'json',
-                    root: 'dataValues'
-                }
-            }
-        });
-
-        var valueBox = Ext.create( 'Ext.form.ComboBox', {
-            id: 'valueBox',
-            store: store,
-            queryMode: 'local',
-            displayField: 'Name',
-            valueField: 'Value'
-        });
-
-        var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
-            id: 'valueChooser',
-            autoShow: true,
-            draggable: true,
-            width: 300,
-            records: this.records,
-            title: 'Choose Business Value setting',
-            items: valueBox,
-            buttons: [
-                {   text: 'OK',
-                    handler: function(arg1, arg2, arg3) {
-                        _.each(this.records, function(record) {
-                            record.set('UserBusinessValue', Ext.getCmp('valueBox').value);
-                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
-
-                            //if the field is 'decimal' you can only have two decimal places....
-                            record.set('WSJFScore', num.toFixed(2));
-                            record.save( {
-                                    callback: function() {
-                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
-                                            Ext.getCmp('piGrid').refresh();
-                                        }
-                                        Ext.getCmp('valueChooser').destroy();
-                                    }
-                            });
-                        });
-                    },
-                    scope: this
-                },
-                {
-                    text: 'Cancel',
-                    handler: function(){ Ext.getCmp('valueChooser').destroy(); }
-                }
-            ]
-        });
-    }
-});
-
-Ext.define('wsjfBulkSetTime', {
-    extend:  Rally.ui.grid.localWSJFBulkSet ,
-    alias: 'widget.wsjfBulkSetTime',
-
-    config: {
-        text: 'Time Criticality',
-        handler: function(arg1, arg2, arg3) {
-            this._onSetTime(arg1, arg2, arg3);
-        },
-
-        data: [
-                { 'Name':'None', 'Value': 0, 'Description': 'No urgency' },
-                { 'Name':'Minimal', 'Value': 1, 'Description': 'This year' },
-                { 'Name':'Low', 'Value': 2, 'Description': 'Within 6 months' },
-                { 'Name':'Medium', 'Value': 3, 'Description': 'This quarter' },
-                { 'Name':'High', 'Value': 5, 'Description': 'This month' },
-                { 'Name':'Very High', 'Value': 8, 'Description': 'This week' },
-                { 'Name':'Extreme', 'Value': 13, 'Description': 'Immediately' }
-            ]
-    },
-
-    _onSetTime: function(arg1, arg2, arg3) {
-
-        var store = Ext.create('Ext.data.Store', {
-            autoLoad: true,
-            model: 'dataModel',
-            data: this.config.data,
-            proxy: {
-                type: 'memory',
-                reader: {
-                    type: 'json',
-                    root: 'dataValues'
-                }
-            }
-        });
-
-        var timeBox = Ext.create( 'Ext.form.ComboBox', {
-            id: 'timeBox',
-            store: store,
-            queryMode: 'local',
-            displayField: 'Name',
-            valueField: 'Value'
-        });
-
-        var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
-            id: 'timeChooser',
-            autoShow: true,
-            draggable: true,
-            width: 300,
-            records: this.records,
-            title: 'Choose Time Criticality',
-            items: timeBox,
-            buttons: [
-                {   text: 'OK',
-                    handler: function(arg1, arg2, arg3) {
-                        _.each(this.records, function(record) {
-                            record.set('TimeCriticality', Ext.getCmp('timeBox').value);
-                            var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
-
-                            //if the field is 'decimal' you can only have two decimal places....
-                            record.set('WSJFScore', num.toFixed(2));
-                            record.save( {
-                                    callback: function() {
-                                        if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')){
-                                            Ext.getCmp('piGrid').refresh();
-                                        }
-                                        Ext.getCmp('timeChooser').destroy();
-                                    }
-                            });
-                        });
-                    },
-                    scope: this
-                },
-                {
-                    text: 'Cancel',
-                    handler: function(){ Ext.getCmp('timeChooser').destroy(); }
-                }
-            ]
-        });
-    }
-});
-
-
-Ext.define('wsjfBulkSetSize', {
-    extend:  Rally.ui.grid.localWSJFBulkSet ,
-    alias: 'widget.wsjfBulkSetSize',
-
-    config: {
-        text: 'Job Size',
-        handler: function(arg1, arg2, arg3) {
-            this._onSetSize(arg1, arg2, arg3);
-        },
-        data: [
-                { 'Name':'XS', 'Value': 1, 'Description': 'Less than 1 week' },
-                { 'Name':'S', 'Value': 2, 'Description': '1 - 3 weeks' },
-                { 'Name':'M', 'Value': 3, 'Description': '1 - 2 months' },
-                { 'Name':'L', 'Value': 5, 'Description': '3 - 6 months' },
-                { 'Name':'XL', 'Value': 8, 'Description': '6 - 9 months' },
-                { 'Name':'XXL', 'Value': 13, 'Description': '9 - 18 months' },
-                { 'Name':'XXXL', 'Value': 21, 'Description': 'Two years or more' }
-            ]
-    },
-
-    _onSetSize: function(arg1, arg2, arg3) {
+    _onSetParam: function(chooserTitle, chooserField) {
 
         var store = Ext.create('Ext.data.Store', {
             autoLoad: true,
@@ -852,19 +579,20 @@ Ext.define('wsjfBulkSetSize', {
             valueField: 'Value'
         });
 
+
         var doChooser = Ext.create( 'Rally.ui.dialog.Dialog', {
             id: 'localChooser',
             autoShow: true,
             draggable: true,
             width: 300,
             records: this.records,
-            title: 'Choose Job Size',
+            title: chooserTitle,
             items: localBox,
             buttons: [
                 {   text: 'OK',
                     handler: function(arg1, arg2, arg3) {
                         _.each(this.records, function(record) {
-                            record.set('JobSize', Ext.getCmp('localBox').value);
+                            record.set(chooserField, Ext.getCmp('localBox').value);
                             var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality'))/record.get('JobSize');
 
                             //if the field is 'decimal' you can only have two decimal places....
@@ -887,5 +615,97 @@ Ext.define('wsjfBulkSetSize', {
                 }
             ]
         });
+    },
+
+    getHelp: function() {
+        return (this._makeHelpFromData());
+    }
+
+});
+
+
+Ext.define('wsjfBulkSetRisk', {
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
+    alias: 'widget.wsjfBulkSetRisk',
+
+    config: {
+        text: 'Upside Potential',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Upside potential', 'RROEValue');
+        },
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No upside' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'Up to 5%' },
+                { 'Name':'Low', 'Value': 2, 'Description': '5% - 10%' },
+                { 'Name':'Medium', 'Value': 3, 'Description': '10% - 25%' },
+                { 'Name':'High', 'Value': 5, 'Description': '25% - 50%' },
+                { 'Name':'Very High', 'Value': 8, 'Description': '50% - 100%' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'More than double' }
+            ]
+    }
+});
+
+Ext.define('wsjfBulkSetValue', {
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
+    alias: 'widget.wsjfBulkSetValue',
+
+    config: {
+        text: 'Business Value',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Derived Value', 'UserBusinessValue');
+        },
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No value' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'Less than $10k' },
+                { 'Name':'Low', 'Value': 2, 'Description': '$10K - $25K' },
+                { 'Name':'Medium', 'Value': 3, 'Description': '$25K - $50K' },
+                { 'Name':'High', 'Value': 5, 'Description': '$50K - 100K' },
+                { 'Name':'Very High', 'Value': 8, 'Description': '$100K - $250K' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'Over $250K' }
+            ]
+    }
+});
+
+Ext.define('wsjfBulkSetTime', {
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
+    alias: 'widget.wsjfBulkSetTime',
+
+    config: {
+        text: 'Time Criticality',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Urgency Rating', 'TimeCriticality');
+        },
+
+        data: [
+                { 'Name':'None', 'Value': 0, 'Description': 'No urgency' },
+                { 'Name':'Minimal', 'Value': 1, 'Description': 'This year' },
+                { 'Name':'Low', 'Value': 2, 'Description': 'Within 6 months' },
+                { 'Name':'Medium', 'Value': 3, 'Description': 'This quarter' },
+                { 'Name':'High', 'Value': 5, 'Description': 'This month' },
+                { 'Name':'Very High', 'Value': 8, 'Description': 'This week' },
+                { 'Name':'Extreme', 'Value': 13, 'Description': 'Immediately' }
+            ]
+    }
+});
+
+
+Ext.define('wsjfBulkSetSize', {
+    extend:  Rally.ui.grid.localWSJFBulkSet ,
+    alias: 'widget.wsjfBulkSetSize',
+
+    config: {
+        text: 'Effort',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Effort Rating', 'JobSize');
+        },
+        data: [
+                { 'Name':'XS', 'Value': 1, 'Description': 'Less than 1 week' },
+                { 'Name':'S', 'Value': 2, 'Description': '1 - 3 weeks' },
+                { 'Name':'M', 'Value': 3, 'Description': '1 - 2 months' },
+                { 'Name':'L', 'Value': 5, 'Description': '3 - 6 months' },
+                { 'Name':'XL', 'Value': 8, 'Description': '6 - 9 months' },
+                { 'Name':'XXL', 'Value': 13, 'Description': '9 - 18 months' },
+                { 'Name':'XXXL', 'Value': 21, 'Description': 'Two years or more' }
+            ]
     }
 });
