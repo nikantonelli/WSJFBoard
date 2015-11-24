@@ -45,9 +45,13 @@ By going to "Edit App Settings" from the gear in the top right hand corner:
 
 4. You can use either the 'JobSize' field or the 'Preliminary Estimate' (T-Shirt sizing).
 
-If you change from JobSize to PrelimEst and set the 'recalculate' checkbox, the app will rework the numbers accordingly.
+If you change from JobSize to PrelimEst and set the 'recalculate on load' checkbox, the app will rework the numbers accordingly.
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/options.png)
 
 ## Caveat!
 
-The current version only re-ranks the number of rows shown in the table. Set to 200 for the most re-ranked in one go
+The current version only re-ranks the number of rows shown in the table. Set to 200 for the most re-ranked in one go.
+
+If you are trying to rank more than 200 portfolio items, you are doing something wrong.
 
