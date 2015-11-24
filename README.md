@@ -25,13 +25,17 @@ Bulk editing to standard values:
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/Bulk%20edit%20menu.jpg)
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/fibonacci.jpg)
 
-Auto-sorting of table after every edit:
-
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/auto%20sorting.jpg)
+The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
 
 Commit of viewed WSJF table as rank in the database:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.jpg)
+
+## Helper messages
+
+Hover over the column titles to get pop-ups with 'reminder' info on the column. These too, can be changed in the data blocks to your needs.
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/hoverhelp.png)
 
 ## User settings
 
