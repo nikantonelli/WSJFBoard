@@ -1,3 +1,78 @@
+Ext,define('MyCustomGird', {
+    extend: 'Rally.ui.grid.Grid',
+
+    _requiresRefresh: function() {
+    }
+
+});
+
+Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
+    extend: 'Ext.AbstractPlugin',
+    alias: 'plugin.rallydependenciesplugin',
+    require: ['Rally.ui.popover.DependenciesPopover'],
+
+//    constructor: function(config) {
+//        this.initConfig(config);
+//        return this.callParent(arguments);
+//    },
+//
+    init: function(cmp) {
+        this.callParent(arguments);
+        this._delayedTask = Ext.create('Ext.util.DelayedTask', this._showPopover, this);
+        this.cmp.on('afterrender', function() {
+            this.cmp.getEl().on('mouseover', this._onMouseOver, this, {
+                delegate: '.formatted-id-link'
+            });
+            this.cmp.getEl().on('mouseout', this._onMouseOut, this, {
+                delegate: '.formatted-id-link'
+            });
+        }, this, {single: true});
+    },
+
+    _onMouseOver: function(event, target) {
+        this._delayedTask.delay(500, null, null, [target]);
+    },
+
+    _onMouseOut: function() {
+        this._delayedTask.cancel();
+    },
+
+    _showPopover: function (target) {
+        var el = Ext.get(target);
+        var tr = el.up(this.cmp.view.getDataRowSelector());
+        var record = this.cmp.view.getRecord(tr);
+
+        if (record && !Ext.getElementById('description-popover')) {
+            var targetRef = el.dom.href && _.last(el.dom.href.split('/detail/'));
+            var targetOid = targetRef && Rally.util.Ref.getOidFromRef(targetRef);
+
+            var popoverOptions = {
+                context: this.cmp.context,
+                field: 'Description',
+                target: el,
+                targetSelector: '#' + el.id
+            };
+
+            if (targetOid && record.get('ObjectID') !== targetOid) {
+                popoverOptions.oid = targetOid;
+                popoverOptions.type = Rally.util.Ref.getTypeFromRef(targetRef);
+            } else {
+                popoverOptions.record = record;
+            }
+
+            this.cmp.recordAction({description: 'showing formatted id hover on grid'});
+            Rally.ui.popover.PopoverFactory.bake(popoverOptions);
+        }
+    },
+
+    destroy: function() {
+       if(this._delayedTask) {
+           this._delayedTask.cancel();
+       }
+    }
+});
+
+
 Ext.define('Rally.ui.bulk.RecordMenuFix', {
     override: 'Rally.ui.menu.bulk.RecordMenu',
     _getMenuItems: function() {
@@ -226,7 +301,9 @@ Ext.define('CustomApp', {
 
         var columnCfgs = [
             'FormattedID',
-            'Name'
+            {
+                dataIndex: 'Name',
+            }
         ];
 
         if (app.getSetting('useStateField')) {
@@ -346,6 +423,12 @@ Ext.define('CustomApp', {
             id: 'piGrid',
             margin: '40, 10, 40, 10',
 
+//            plugins: ['rallydescriptionpopover' ],
+
+            plugins: [
+                'rallydependenciesplugin'
+            ],
+
             columnCfgs: columnCfgs,
 
             bulkEditConfig: {
@@ -417,7 +500,7 @@ Ext.define('CustomApp', {
 
         });
 
-        //        Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
+//                Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
 
         this.add(grid);
 
@@ -546,10 +629,10 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
                                     Ext.getCmp('piGrid').refresh();
                                 }
-                                Ext.getCmp('localChooser').destroy();
                             }
                         });
                     });
+                    Ext.getCmp('localChooser').destroy();
                 },
                 scope: this
             }, {

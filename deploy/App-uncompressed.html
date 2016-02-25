@@ -7,7 +7,64 @@
 
     <script type="text/javascript">
         Rally.onReady(function () {
-                Ext.define('Rally.ui.bulk.RecordMenuFix', {
+                Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
+    extend: 'Ext.AbstractPlugin',
+    alias: 'plugin.rallydependenciesplugin',
+    require: ['Rally.ui.popover.DependenciesPopover'],
+
+    constructor: function(config) {
+        this.initConfig(config);
+        return this.callParent(arguments);
+    },
+
+    init: function(grid) {
+        this.grid = grid;
+        this.grid.store.mon(grid.store, 'load', this._onLoad, this);
+    },
+
+    /**
+     * @private
+     */
+    _onLoad: function() {
+        this._attachPopovers('Dependencies');
+    },
+
+    /**
+     * @private
+     * @param {String} fieldName
+     */
+    _attachPopovers: function(fieldName) {
+        var me = this;
+        this.grid.getEl().select('.rally-grid-cell-' + fieldName).each(function(flyEl) {
+            var el = Ext.get(flyEl.dom);
+            var record = me._getRecordFor(el);
+            var piRef = record._ref ? record._ref : record.raw._ref;
+            el.on('click', function() {
+                Ext.create('Rally.ui.popover.DependenciesPopover', {
+                    target: el,
+                    targetSelector: me._getSelectorFor(record.data.FormattedID, fieldName),
+                });
+            });
+        });
+    },
+
+    /**
+     * @private
+     * @param {Ext.Element} el
+     */
+    _getRecordFor: function(el) {
+        var row = el.up('.' + Ext.baseCSSPrefix + 'grid-row');
+        return row ? this.grid.getStore().getAt(row.dom.rowIndex) : null;
+    },
+
+    _getSelectorFor: function(formattedID, fieldName) {
+        return '.' + formattedID + '-' + fieldName;
+    }
+});
+
+
+
+Ext.define('Rally.ui.bulk.RecordMenuFix', {
     override: 'Rally.ui.menu.bulk.RecordMenu',
     _getMenuItems: function() {
         var records = this.getRecords();
@@ -235,7 +292,9 @@ Ext.define('CustomApp', {
 
         var columnCfgs = [
             'FormattedID',
-            'Name'
+            {
+                dataIndex: 'Name',
+            }
         ];
 
         if (app.getSetting('useStateField')) {
@@ -353,7 +412,17 @@ Ext.define('CustomApp', {
 
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
-            margin: 10,
+            margin: '40, 10, 40, 10',
+
+//            plugins: ['rallydescriptionpopover' ],
+
+            viewConfig: {
+                listeners: {
+                    itemmouseenter: function( arg1, arg2, arg3, arg4, arg5) {
+                        debugger;
+                    }
+                }
+            },
 
             columnCfgs: columnCfgs,
 
@@ -426,7 +495,7 @@ Ext.define('CustomApp', {
 
         });
 
-        //        Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
+                Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
 
         this.add(grid);
 
