@@ -1,4 +1,4 @@
-Ext,define('MyCustomGird', {
+Ext.define('MyCustomGird', {
     extend: 'Rally.ui.grid.Grid',
 
     _requiresRefresh: function() {
@@ -302,7 +302,7 @@ Ext.define('CustomApp', {
         var columnCfgs = [
             'FormattedID',
             {
-                dataIndex: 'Name',
+                dataIndex: 'Name'
             }
         ];
 
