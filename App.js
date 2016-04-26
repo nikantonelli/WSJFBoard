@@ -391,7 +391,7 @@ Ext.define('CustomApp', {
             });
         } else {
             sizeCol = _.merge(sizeCol, {
-                dataIndex: 'JobSize'
+                dataIndex: 'RefinedEstimate'
             });
         }
 
@@ -403,10 +403,17 @@ Ext.define('CustomApp', {
             align: 'center',
             listeners: {
                 afterrender: function() {
-                    Ext.create('Rally.ui.tooltip.ToolTip', {
-                        target: this.getEl(),
-                        html: '<p><strong>WSJF = (RR/OE + Derived Value + Time Criticality)/Job Size</strong></p>'
-                    });
+                    if (app.getSetting('usePrelim')) {
+                        Ext.create('Rally.ui.tooltip.ToolTip', {
+                            target: this.getEl(),
+                            html: '<p><strong>WSJF = (RR/OE + Derived Value + Time Criticality)/Preliminary Estimate</strong></p>'
+                        });
+                    } else {
+                        Ext.create('Rally.ui.tooltip.ToolTip', {
+                            target: this.getEl(),
+                            html: '<p><strong>WSJF = (RR/OE + Derived Value + Time Criticality)/Refined Estimate</strong></p>'
+                        });
+                    }
                 }
             }
         };
@@ -454,7 +461,7 @@ Ext.define('CustomApp', {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'RefinedEstimate', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
                 filters: app._getFilters(app)
             },
 
@@ -480,7 +487,7 @@ Ext.define('CustomApp', {
                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('PreliminaryEstimate').Value;
                     }
                 } else {
-                    num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
+                    num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('RefinedEstimate');
                 }
 
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
@@ -620,7 +627,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                 handler: function(arg1, arg2, arg3) {
                     _.each(this.records, function(record) {
                         record.set(chooserField, Ext.getCmp('localBox').value);
-                        var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
+                        var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('RefinedEstimate');
 
                         //if the field is 'decimal' you can only have two decimal places....
                         record.set('WSJFScore', num.toFixed(2));
@@ -783,7 +790,7 @@ Ext.define('wsjfBulkSetSize', {
     config: {
         text: 'Size',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Size/Effort Rating', 'JobSize');
+            this._onSetParam('Choose Size/Effort Rating', 'RefinedEstimate');
         },
         data: [{
             'Name': 'XS',
