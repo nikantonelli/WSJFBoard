@@ -185,6 +185,11 @@ Ext.define('CustomApp', {
             fieldLabel: 'Show Project Field',
             labelWidth: 200,
             name: 'useProjectField'
+        },{
+            xtype: 'rallycheckboxfield',
+            fieldLabel: 'Show Advanced filter on the application. This will remove the ability to commit the rank',
+            labelWidth: 200,
+            name: 'showFilter'
         }];
     },
 
@@ -206,6 +211,11 @@ Ext.define('CustomApp', {
             }
         });
 
+        this.add({
+            xtype: 'container',
+            id: 'filterBox'
+        });
+
         Ext.getCmp('headerBox').add({
             xtype: 'rallyportfolioitemtypecombobox',
             labelWidth: 150,
@@ -224,10 +234,39 @@ Ext.define('CustomApp', {
             align: 'left'
         });
 
+        if(app.getSetting('showFilter')){
+            Ext.getCmp('headerBox').add({
+                xtype: 'rallyinlinefiltercontrol',
+                name: 'inlineFilter',
+                itemId: 'inlineFilter',
+                margin: '10 10 10 10',                           
+                context: this.getContext(),
+                height:26,
+                inlineFilterButtonConfig: {
+                    stateful: true,
+                    stateId: this.getContext().getScopedStateId('inline-filter'),
+                    context: this.getContext(),
+                    modelNames: ['PortfolioItem'],
+                    filterChildren: false,
+                    inlineFilterPanelConfig: {
+                        quickFilterPanelConfig: {
+                            defaultFields: ['ArtifactSearch', 'Owner']
+                        }
+                    },
+                    listeners: {
+                        inlinefilterchange: this._onFilterChange,
+                        inlinefilterready: this._onFilterReady,
+                        scope: this
+                    } 
+                }
+            });            
+        }
+
+
         //We should prevent re-ordering of rank if we have sub-sampled by release
         //It makes for a confusing result otherwise
         var timeboxscope = this.getContext().getTimeboxScope();
-        if (!timeboxscope) {
+        if (!timeboxscope && !app.getSetting('showFilter')) {
             Ext.getCmp('headerBox').add({
                 xtype: 'rallybutton',
                 id: 'MakeItSo',
@@ -249,12 +288,24 @@ Ext.define('CustomApp', {
         }
     },
 
+    _onFilterChange: function(inlineFilterButton){
+        var me = this;
+        me.advFilters = inlineFilterButton.getTypesAndFilters().filters;
+        me._startApp(me);
+    },
+
+    _onFilterReady: function(inlineFilterPanel) {
+        var me = this;
+        Ext.getCmp('filterBox').add(inlineFilterPanel);
+    },
+
+
+
     _getFilters: function(app) {
         var filters = [];
 
         // We do not have timeboxes on higher level portfolio items
-
-        if (Ext.getCmp('itemType').getRecord().data.Ordinal === 0) {
+        if (Ext.getCmp('itemType').getRecord() && Ext.getCmp('itemType').getRecord().data.Ordinal === 0) {
             var timeboxscope = this.getContext().getTimeboxScope();
             if (timeboxscope) {
                 var filterQuery = timeboxscope.getQueryFilter();
@@ -285,6 +336,12 @@ Ext.define('CustomApp', {
             var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
             filterObj.itemId = filterObj.toString();
             filters.push(filterObj);
+        }
+
+        if(this.getSetting('showFilter') && this.advFilters.length > 0){
+            Ext.Array.each(this.advFilters,function(filter){
+                filters.push(filter);
+            });
         }
 
         return filters;

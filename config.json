@@ -1,13 +1,13 @@
 {
-   "name": "WSJFBoard",
-   "className": "CustomApp",
-   "server": "https://rally1.rallydev.com",
-   "sdk": "2.0",
-   "javascript": [
-      "App.js",
-      "Proxy/BatchProxy.js"
-   ],
-   "css": [
-      "app.css"
-   ]
+    "name": "WSJFBoard",
+    "className": "CustomApp",
+    "server": "https://rally1.rallydev.com",
+    "sdk": "2.1",
+    "javascript": [
+        "App.js",
+        "Proxy/BatchProxy.js"
+    ],
+    "css": [
+        "app.css"
+    ]
 }
