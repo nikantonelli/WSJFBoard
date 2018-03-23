@@ -331,8 +331,16 @@ Ext.define('CustomApp', {
         //Now get the settings query box and apply those settings
         var queryString = app.getSetting('query');
         if (queryString) {
-            Ext.getCmp('MakeItSo').hide(); //Don't allow committing if subselected
-            Ext.getCmp('globalCheck').hide();
+            var cmpMakeitSo = Ext.getCmp('MakeItSo');
+            if (cmpMakeitSo) {
+                // In certain cases when the page alrady was filtered, for e.g. Release filtered this component might not be present.
+                cmpMakeitSo.hide(); //Don't allow committing if subselected
+            }
+            var cmpGlobalCheck = Ext.getCmp('globalCheck');
+            if (cmpGlobalCheck) {
+                // Similar for the Global Check that might not be present.
+                cmpGlobalCheck.hide();
+            }
             var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
             filterObj.itemId = filterObj.toString();
             filters.push(filterObj);
