@@ -83,12 +83,16 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
             id: 'wsjfBulkSetRisk'
         });
         items.push({
-            xtype: 'wsjfBulkSetValue',
+            xtype: 'wsjfBulkSetCost',
             id: 'wsjfBulkSetValue'
         });
         items.push({
-            xtype: 'wsjfBulkSetTime',
+            xtype: 'wsjfBulkSetCust',
             id: 'wsjfBulkSetTime'
+        });
+        items.push({
+            xtype: 'wsjfBulkSetRevn',
+            id: 'wsjfBulkSetRevn'
         });
 
         if (Ext.getCmp('wsjfApp').getSetting('usePrelim') === false) {
@@ -388,8 +392,22 @@ Ext.define('CustomApp', {
         }
 
         columnCfgs.push({
-            dataIndex: 'RROEValue',
-            text: 'RR/OE',
+            dataIndex: 'c_CostImpactRating',
+            text: 'Cost Impact',
+            align: 'center',
+            listeners: {
+                afterrender: function() {
+                    thisMenu = Ext.create('wsjfBulkSetCost');
+                    helpHTML = thisMenu.getHelp();
+                    Ext.create('Rally.ui.tooltip.ToolTip', {
+                        target: this.getEl(),
+                        html: helpHTML
+                    });
+                }
+            }
+        }, {
+            dataIndex: 'c_RiskImpactRating',
+            text: 'Risk Impact',
             align: 'center',
             listeners: {
                 afterrender: function() {
@@ -402,12 +420,12 @@ Ext.define('CustomApp', {
                 }
             }
         }, {
-            dataIndex: 'UserBusinessValue',
-            text: 'Derived Value',
+            dataIndex: 'c_CustomerImpactRating',
+            text: 'Customer Impact',
             align: 'center',
             listeners: {
                 afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetValue');
+                    thisMenu = Ext.create('wsjfBulkSetCust');
                     helpHTML = thisMenu.getHelp();
                     Ext.create('Rally.ui.tooltip.ToolTip', {
                         target: this.getEl(),
@@ -416,12 +434,12 @@ Ext.define('CustomApp', {
                 }
             }
         }, {
-            dataIndex: 'TimeCriticality',
-            text: 'Time Criticality',
+            dataIndex: 'c_RevenueImpactRating',
+            text: 'Revenue Impact',
             align: 'center',
             listeners: {
                 afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetTime');
+                    thisMenu = Ext.create('wsjfBulkSetRevn');
                     helpHTML = thisMenu.getHelp();
                     Ext.create('Rally.ui.tooltip.ToolTip', {
                         target: this.getEl(),
@@ -470,7 +488,7 @@ Ext.define('CustomApp', {
                 afterrender: function() {
                     Ext.create('Rally.ui.tooltip.ToolTip', {
                         target: this.getEl(),
-                        html: '<p><strong>WSJF = (RR/OE + Derived Value + Time Criticality)/Job Size</strong></p>'
+                        html: '<p><strong>WSJF = Impact(Risk + Cost + Revenue + Customer)/Job Size</strong></p>',
                     });
                 }
             }
@@ -519,7 +537,7 @@ Ext.define('CustomApp', {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
                 filters: app._getFilters(app)
             },
 
@@ -537,17 +555,8 @@ Ext.define('CustomApp', {
             },
 
             _saveWSJF: function(record) {
-                var num = 0;
+                var num = app._calcWSJF(record);
                 var oldVal = record.get('WSJFScore').toFixed(2);
-
-                if (app.getSetting('usePrelim')) {
-                    if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
-                        num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('PreliminaryEstimate').Value;
-                    }
-                } else {
-                    num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
-                }
-
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
                 num = num.toFixed(2);
 
@@ -569,6 +578,22 @@ Ext.define('CustomApp', {
 
         this.add(grid);
 
+    },
+
+    _calcWSJF: function(record) {
+        var num = ( Math.abs(parseInt(record.get('c_RevenueImpactRating') || 0)) + 
+        Math.abs(parseFloat(record.get('c_CostImpactRating') || 0)) + 
+        Math.abs(parseFloat(record.get('c_CustomerImpactRating') || 0)) + 
+        Math.abs(parseFloat(record.get('c_RiskImpactRating') || 0)) );
+        if (Ext.getCmp('wsjfApp').getSetting('usePrelim')) {
+            // If no Prelim value, we will assume '1', so no calc needed.
+            if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
+                num = num / record.get('PreliminaryEstimate').Value;
+            }
+        } else {
+            num = num / record.get('JobSize');
+        }
+        return num;
     },
 
     _recordToRank: 0,
@@ -671,6 +696,12 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
             valueField: 'Value'
         });
 
+        var negativeSelect = Ext.create('Ext.form.field.Checkbox', {
+            boxLabel: 'Negative',
+            checked: false,
+            id: 'negativeCheck'
+        })
+
 
         var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
             id: 'localChooser',
@@ -679,13 +710,16 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
             width: 300,
             records: this.records,
             title: chooserTitle,
-            items: localBox,
+            items: [localBox, negativeSelect],
             buttons: [{
                 text: 'OK',
                 handler: function(arg1, arg2, arg3) {
                     _.each(this.records, function(record) {
-                        record.set(chooserField, Ext.getCmp('localBox').value);
-                        var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
+                        debugger;
+                        var negative = 1
+                        if ( Ext.getCmp('negativeCheck').value) { negative = -1; }
+                        record.set(chooserField, Ext.getCmp('localBox').value * negative);
+                        var num = Ext.getCmp('wsjfApp')._calcWSJF(record)
 
                         //if the field is 'decimal' you can only have two decimal places....
                         record.set('WSJFScore', num.toFixed(2));
@@ -715,16 +749,58 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
 
 });
 
+Ext.define('wsjfBulkSetRevn', {
+    extend: Rally.ui.grid.localWSJFBulkSet,
+    alias: 'widget.wsjfBulkSetRevn',
+
+    config: {
+        text: 'Revenue Impact Rating',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Revenue Impact Rating', 'c_RevnImpactRating');
+        },
+
+        data: [{
+            'Name': 'None',
+            'Value': 0,
+            'Description': ''
+        }, {
+            'Name': 'Minimal',
+            'Value': 1,
+            'Description': ''
+        }, {
+            'Name': 'Low',
+            'Value': 2,
+            'Description': ''
+        }, {
+            'Name': 'Medium',
+            'Value': 3,
+            'Description': ''
+        }, {
+            'Name': 'High',
+            'Value': 5,
+            'Description': ''
+        }, {
+            'Name': 'Very High',
+            'Value': 8,
+            'Description': ''
+        }, {
+            'Name': 'Extreme',
+            'Value': 13,
+            'Description': ''
+        }]
+    }
+});
 
 Ext.define('wsjfBulkSetRisk', {
     extend: Rally.ui.grid.localWSJFBulkSet,
     alias: 'widget.wsjfBulkSetRisk',
 
     config: {
-        text: 'Risk Reduction',
+        text: 'Risk Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose RR/OE potential', 'RROEValue');
+            this._onSetParam('Choose Revenue Impact Rating', 'c_RiskImpactRating');
         },
+
         data: [{
             'Name': 'None',
             'Value': 0,
@@ -757,15 +833,16 @@ Ext.define('wsjfBulkSetRisk', {
     }
 });
 
-Ext.define('wsjfBulkSetValue', {
+Ext.define('wsjfBulkSetCust', {
     extend: Rally.ui.grid.localWSJFBulkSet,
-    alias: 'widget.wsjfBulkSetValue',
+    alias: 'widget.wsjfBulkSetCust',
 
     config: {
-        text: 'Business Value',
+        text: 'Customer Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Derived Value', 'UserBusinessValue');
+            this._onSetParam('Choose Revenue Impact Rating', 'c_CustomerImpactRating');
         },
+
         data: [{
             'Name': 'None',
             'Value': 0,
@@ -798,44 +875,45 @@ Ext.define('wsjfBulkSetValue', {
     }
 });
 
-Ext.define('wsjfBulkSetTime', {
+
+Ext.define('wsjfBulkSetCost', {
     extend: Rally.ui.grid.localWSJFBulkSet,
-    alias: 'widget.wsjfBulkSetTime',
+    alias: 'widget.wsjfBulkSetCost',
 
     config: {
-        text: 'Time Criticality',
+        text: 'Cost Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Urgency Rating', 'TimeCriticality');
+            this._onSetParam('Choose Revenue Impact Rating', 'c_CostImpactRating');
         },
 
         data: [{
             'Name': 'None',
             'Value': 0,
-            'Description': 'No urgency'
+            'Description': ''
         }, {
             'Name': 'Minimal',
             'Value': 1,
-            'Description': 'This year'
+            'Description': ''
         }, {
             'Name': 'Low',
             'Value': 2,
-            'Description': 'Within 6 months'
+            'Description': ''
         }, {
             'Name': 'Medium',
             'Value': 3,
-            'Description': 'This quarter'
+            'Description': ''
         }, {
             'Name': 'High',
             'Value': 5,
-            'Description': 'This month'
+            'Description': ''
         }, {
             'Name': 'Very High',
             'Value': 8,
-            'Description': 'This week'
+            'Description': ''
         }, {
             'Name': 'Extreme',
             'Value': 13,
-            'Description': 'Immediately'
+            'Description': ''
         }]
     }
 });
