@@ -1,3 +1,20 @@
 .app {
      /* Add app styles here */
 }
+
+.rbsBar {
+    color: #c000c0;
+    background-color: #f5d9f5
+
+}
+.rbsBar-bar {
+    color: #808080;
+    width: '100px';    
+}
+.rbsBar-text {
+    color: #000000
+    
+}
+.rbsBar-text-back {
+    color: #ff0000
+}

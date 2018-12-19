@@ -123,8 +123,7 @@ Ext.define('CustomApp', {
 
     id: 'wsjfApp',
 
-    scopeType: 'release',
-    settingsScope: 'project',
+    _customFields: ['c_CostImpactWeighting','c_CustomerImpactWeighting','c_RiskImpactWeighting','c_RevenueImpactWeighting'],
 
     stateful: true,
 
@@ -200,9 +199,36 @@ Ext.define('CustomApp', {
 
     launch: function() {
 
-        var context = this.getContext();
         var app = this;
+        Deft.Chain.pipeline([this._getProject, this._setupApp], this);
 
+    },
+
+    _getProject: function() {
+        var context = this.getContext();
+        var project = context.getProject();
+        var deferred = Ext.create('Deft.Deferred');
+        Ext.create('Rally.data.wsapi.Store',{
+            model:'Project',
+            autoLoad: true,
+            fetch:['Children','Name',].concat(this._customFields),
+            filters: [ {
+                property: 'ObjectID',
+                value: project.ObjectID
+            }],
+            limit:'Infinity',
+            listeners: {
+                load: function(store,projects) {
+                    deferred.resolve(projects);
+                }
+            }
+        });
+        return deferred.promise;
+    },
+
+    _setupApp: function(projects) {
+        var project = projects[0];  //Only interested in the one we are in.
+        var app = this;
 
         this.add({
             xtype: 'container',
@@ -210,7 +236,7 @@ Ext.define('CustomApp', {
             layout: 'column',
             border: 5,
             style: {
-                borderColor: Rally.util.Colors.cyan,
+                borderColor: '#396295',
                 borderStyle: 'solid'
             }
         });
@@ -290,6 +316,114 @@ Ext.define('CustomApp', {
             });
 
         }
+
+        //Add fields to show current project weighting
+        var vbox = Ext.getCmp('headerBox').add({
+            xtype: 'container',
+            id: 'weightingBox',
+            layout: 'hbox',
+            items: [
+                {
+                    xtype: 'container',
+                    items: [
+                        {
+                            xtype: 'container',
+                            layout: 'hbox',
+                            items: [
+                                {
+                                    xtype: 'label',
+                                    width: '120px',
+                                    margin: '10 0 10 10',
+                                    text: 'Cost Weighting',
+                                    forId: 'costweighting',
+                                },
+                                {
+                                    xtype: 'progressbar',
+                                    id: 'costweighting',
+                                    width: '120px',
+                                    value: (project.get('c_CostImpactWeighting') || 100)/100,
+                                    margin: '10 0 10 0',
+                                    text: (project.get('c_CostImpactWeighting') || 100)
+                                }
+                            ]
+                        },{
+                            xtype: 'container',
+                            layout: 'hbox',
+                            items: [
+                                {
+                                    xtype: 'label',
+                                    width: '120px',
+                                    margin: '0 0 10 10',
+                                    text: 'Customer Weighting',
+                                    forId: 'custweighting',
+                                },{
+                                    xtype: 'progressbar',
+                                    id: 'custweighting',
+                                    width: '120px',
+                                    value: (project.get('c_CustomerImpactWeighting') || 100)/100,
+                                    margin: '0 0 10 0',
+                                    text: (project.get('c_CustomerImpactWeighting') || 100),
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    xtype: 'container',
+                    items: [
+                        {
+                            xtype: 'container',
+                            layout: 'hbox',
+                            items: [
+                                {
+                                    xtype: 'label',
+                                    width: '120px',
+                                    margin: '10 0 10 10',
+                                    text: 'Revenue Weighting',
+                                    forId: 'revnweighting',
+                                },
+                                {
+                                    xtype: 'progressbar',
+                                    id: 'revnweighting',
+                                    width: '120px',
+                                    value: (project.get('c_RevenueImpactWeighting') || 100)/100,
+                                    margin: '10 0 10 0',
+                                    text: (project.get('c_RevenueImpactWeighting') || 100)
+                                }
+                            ]
+                        },{
+                            xtype: 'container',
+                            layout: 'hbox',
+                            items: [
+                                {
+                                    xtype: 'label',
+                                    width: '120px',
+                                    margin: '0 0 10 10',
+                                    text: 'Risk Weighting',
+                                    forId: 'riskweighting',
+                                },{
+                                    xtype: 'progressbar',
+                                    id: 'riskweighting',
+                                    width: '120px',
+                                    value: (project.get('c_RiskImpactWeighting') || 100)/100,
+                                    margin: '0 0 10 0',
+                                    text: (project.get('c_RiskImpactWeighting') || 100)
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+        //If we are subscription admin, allow for setting of the project variables
+        Ext.util.Observable.capture( Ext.getCmp('riskweighting'), function(event) { console.log(event, arguments);});
+
+        //Ext.getCmp('riskweighting').on('click', function(args) { debugger;})
+
+    },
+
+    _changeProjectWeightings: function() {
+        debugger;
     },
 
     _onFilterChange: function(inlineFilterButton){
@@ -667,7 +801,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
         html = '';
 
         _.each(this.config.data, function(record) {
-            html += '<p><strong>' + record.Name + '(' + record.Value + '):  ' + record.Description + '</strong></p>';
+            html += '<p><strong>' + record.Name + record.Description + '</strong></p>';
         });
 
         return html;
@@ -700,7 +834,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
             boxLabel: 'Negative',
             checked: false,
             id: 'negativeCheck'
-        })
+        });
 
 
         var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
@@ -716,10 +850,10 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                 handler: function(arg1, arg2, arg3) {
                     _.each(this.records, function(record) {
                         debugger;
-                        var negative = 1
+                        var negative = 1;
                         if ( Ext.getCmp('negativeCheck').value) { negative = -1; }
                         record.set(chooserField, Ext.getCmp('localBox').value * negative);
-                        var num = Ext.getCmp('wsjfApp')._calcWSJF(record)
+                        var num = Ext.getCmp('wsjfApp')._calcWSJF(record);
 
                         //if the field is 'decimal' you can only have two decimal places....
                         record.set('WSJFScore', num.toFixed(2));
