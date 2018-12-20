@@ -782,15 +782,16 @@ Ext.define('CustomApp', {
         columnCfgs.push(sizeCol);
 
         var tpl = new Ext.XTemplate(
-            '<div class="{[this.cellCheck(values)]}">{c_weightedWSJF}</div>',
+            '<div {[this.cellCheck(values)]}>{c_weightedWSJF}</div>',
             {
                 cellCheck: function(values) { 
-                    if (values.c_weightedWSJF != values.WSJFScore) {
-                        return 'notcomparable';
+                    if (values.c_weightedWSJF > values.WSJFScore) {
+                        return 'class="upgradedItem"';
                     }
-                    else {
-                        return 'comparable';
+                    else  if (values.c_weightedWSJF < values.WSJFScore) {
+                        return 'class="downgradedItem"';
                     }
+                    else {return '';}
                 }
             }
         );
@@ -1480,10 +1481,15 @@ Ext.define('wsjfBulkSetSize', {
 
 
     <style type="text/css">
-        .notcomparable {
+        .upgradedItem {
   border-style: solid;
   border-width: 0px 5px 0px 0px;
-  border-color: #ff2002;
+  border-color: #ff4040;
+}
+.downgradedItem {
+  border-style: solid;
+  border-width: 0px 5px 0px 0px;
+  border-color: #4040ff;
 }
 
     </style>

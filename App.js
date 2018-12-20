@@ -773,15 +773,16 @@ Ext.define('CustomApp', {
         columnCfgs.push(sizeCol);
 
         var tpl = new Ext.XTemplate(
-            '<div class="{[this.cellCheck(values)]}">{c_weightedWSJF}</div>',
+            '<div {[this.cellCheck(values)]}>{c_weightedWSJF}</div>',
             {
                 cellCheck: function(values) { 
-                    if (values.c_weightedWSJF != values.WSJFScore) {
-                        return 'notcomparable';
+                    if (values.c_weightedWSJF > values.WSJFScore) {
+                        return 'class="upgradedItem"';
                     }
-                    else {
-                        return 'comparable';
+                    else  if (values.c_weightedWSJF < values.WSJFScore) {
+                        return 'class="downgradedItem"';
                     }
+                    else {return '';}
                 }
             }
         );
