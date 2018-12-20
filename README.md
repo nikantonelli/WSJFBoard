@@ -8,7 +8,7 @@ Portfolio Items of interest can be selected by entering a query in the App Setti
 
 If any filter is applied (i.e. via query box or by using a page filtered by release) the ability to commit the rank is removed. This is a safety feature to avoid time consuming mistakes (and not a bug)!
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/overview.jpg)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/allcolumns.png)
 
 ## Features
 
@@ -22,7 +22,7 @@ Normal editing menu:
 
 Bulk editing to standard values:
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/Bulk%20edit%20menu.jpg)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/Bulk%20edit%20menu.png)
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/fibonacci.jpg)
 
 The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
