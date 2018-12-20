@@ -193,6 +193,12 @@ Ext.define('CustomApp', {
             fieldLabel: 'Show Advanced filter on the application. This will remove the ability to commit the rank',
             labelWidth: 200,
             name: 'showFilter'
+        },{
+            xtype: 'rallycheckboxfield',
+            fieldLabel: 'Allow Weighting Changes',
+            labelWidth: 200,
+            name: 'showChange',
+            value: true
         }];
     },
 
@@ -416,14 +422,119 @@ Ext.define('CustomApp', {
             ]
         });
         //If we are subscription admin, allow for setting of the project variables
-        Ext.util.Observable.capture( Ext.getCmp('riskweighting'), function(event) { console.log(event, arguments);});
+        debugger;
+        var weAreAdmin = app.getSetting('showChange');
+        if (weAreAdmin) {
+            var projectChooser = Ext.create('Rally.ui.picker.project.ProjectPicker', {
+                    id: 'projectChooserId',
+                    listeners: {
+                        expand: function(args) {
+                            this.setValueForProjectRef(project.get('_ref'));
+                        }
+                    }
+            });
+            
 
+            var doChildren = Ext.create('Ext.Container', {
+                items: [{
+                    xtype: 'rallycheckboxfield',
+                    fieldLabel: 'Change all children projects',
+                    id: 'doChildrenId'
+                }]
+            });
+
+            var sliders = Ext.create('Ext.Container', {
+                id: 'sliderBox',
+                layout: 'hbox',
+                items: [
+                    {
+                        xtype: 'rallyslider',
+                        id: 'costSlider',
+                        value: (project.get('c_CustomerImpactWeighting') || 100),
+                        minValue: 0,
+                        maxValue:100,
+                        vertical: true,
+                        height: 200,
+                        labelAlign: 'top',
+                        fieldLabel: 'Cost',
+                        margin: '0 0 0 10'
+                    },{
+                        xtype: 'rallyslider',
+                        id: 'custSlider',
+                        minValue: 0,
+                        maxValue:100,
+                        vertical: true,
+                        height: 200,
+                        value: (project.get('c_CustomerImpactWeighting') || 100),
+                        labelAlign: 'top',
+                        fieldLabel: 'Customer'
+                    },{
+                        xtype: 'rallyslider',
+                        vertical: true,
+                        minValue: 0,
+                        maxValue:100,
+                        height: 200,
+                        id: 'revnSlider',
+                        value: (project.get('c_RevenueImpactWeighting') || 100),
+                        labelAlign: 'top',
+                        fieldLabel: 'Revenue'
+                    },{
+                        xtype: 'rallyslider',
+                        vertical: true,
+                        height: 200,
+                        minValue: 0,
+                        maxValue:100,
+                        id: 'riskSlider',
+                        value: (project.get('c_RiskImpactWeighting') || 100),
+                        labelAlign: 'top',
+                        fieldLabel: 'Risk'
+                    },
+                ]
+            });
+
+            Ext.getCmp('headerBox').add({
+                xtype: 'rallybutton',
+                margin: 10,
+                text: 'Change Weightings',
+                handler: function() {
+                    var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
+                        id: 'projectChooser',
+                        autoShow: true,
+                        draggable: true,
+                        width: 400,
+                        title: 'Choose Projects to Change',
+                        items: [projectChooser, doChildren, sliders],
+                        buttons: [
+                            {
+                                text: 'OK',
+                                handler: function(arg1, arg2, arg3) {
+                                    //Get all the projectCHoosers selection
+                                    app._changeProjectWeightings(projectChooser, doChildren, sliders);
+                                },
+                            },
+                            {
+                                  text: 'Cancel',
+                                  handler: function() {
+                                    Ext.getCmp('projectChooser').destroy();
+                                }
+                            }
+                        ],
+                        scope: app
+                    });
+                }
+            });
+        }
         //Ext.getCmp('riskweighting').on('click', function(args) { debugger;})
 
     },
 
-    _changeProjectWeightings: function() {
+    _changeProjectWeightings: function(projectChooser, doChildren, sliders) {
         debugger;
+        var selected = projectChooser.getSelectedRecord();
+        var risk = sliders.getComponent('riskSlider').value;
+        var cost = sliders.getComponent('costSlider').value;
+        var cust = sliders.getComponent('custSlider').value;
+        var revn = sliders.getComponent('revnSlider').value;
     },
 
     _onFilterChange: function(inlineFilterButton){
@@ -538,7 +649,8 @@ Ext.define('CustomApp', {
                         html: helpHTML
                     });
                 }
-            }
+            },
+            editor: null
         }, {
             dataIndex: 'c_RiskImpactRating',
             text: 'Risk Impact',
@@ -552,7 +664,8 @@ Ext.define('CustomApp', {
                         html: helpHTML
                     });
                 }
-            }
+            },
+            editor: null
         }, {
             dataIndex: 'c_CustomerImpactRating',
             text: 'Customer Impact',
@@ -566,7 +679,8 @@ Ext.define('CustomApp', {
                         html: helpHTML
                     });
                 }
-            }
+            },
+            editor: null
         }, {
             dataIndex: 'c_RevenueImpactRating',
             text: 'Revenue Impact',
@@ -580,7 +694,8 @@ Ext.define('CustomApp', {
                         html: helpHTML
                     });
                 }
-            }
+            },
+            editor: null
         });
 
 
@@ -849,7 +964,6 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                 text: 'OK',
                 handler: function(arg1, arg2, arg3) {
                     _.each(this.records, function(record) {
-                        debugger;
                         var negative = 1;
                         if ( Ext.getCmp('negativeCheck').value) { negative = -1; }
                         record.set(chooserField, Ext.getCmp('localBox').value * negative);
