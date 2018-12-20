@@ -1,11 +1,3 @@
-Ext.define('MyCustomGird', {
-    extend: 'Rally.ui.grid.Grid',
-
-    _requiresRefresh: function() {
-    }
-
-});
-
 Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
     extend: 'Ext.AbstractPlugin',
     alias: 'plugin.rallydependenciesplugin',
@@ -315,32 +307,6 @@ Ext.define('CustomApp', {
             });            
         }
 
-
-        //We should prevent re-ordering of rank if we have sub-sampled by release
-        //It makes for a confusing result otherwise
-        var timeboxscope = this.getContext().getTimeboxScope();
-        if (!timeboxscope && !app.getSetting('showFilter')) {
-            Ext.getCmp('headerBox').add({
-                xtype: 'rallybutton',
-                id: 'MakeItSo',
-                margin: 10,
-                text: 'Commit Weighted WSJF',
-                handler: this._storeRecords,
-                scope: this
-            });
-
-            //Add the option to commit first record to top of global rank.
-            if (app.getSetting('globalOverride')){
-                Ext.getCmp('headerBox').add({
-                    xtype: 'rallycheckboxfield',
-                    fieldLabel: 'Override global rank',
-                    id: 'globalCheck',
-                    value: false,
-                    margin: 10
-                });
-            }
-        }
-
         //Add fields to show current project weighting
         var vbox = Ext.getCmp('headerBox').add({
             xtype: 'container',
@@ -557,6 +523,30 @@ Ext.define('CustomApp', {
                     });
                 }
             });
+            //We should prevent re-ordering of rank if we have sub-sampled by release
+            //It makes for a confusing result otherwise
+            var timeboxscope = this.getContext().getTimeboxScope();
+            if (!timeboxscope && !app.getSetting('showFilter')) {
+                Ext.getCmp('headerBox').add({
+                    xtype: 'rallybutton',
+                    id: 'MakeItSo',
+                    margin: 10,
+                    text: 'Commit Weighted WSJF',
+                    handler: this._storeRecords,
+                    scope: this
+                });
+
+                //Add the option to commit first record to top of global rank.
+                if (app.getSetting('globalOverride')){
+                    Ext.getCmp('headerBox').add({
+                        xtype: 'rallycheckboxfield',
+                        fieldLabel: 'Override global rank',
+                        id: 'globalCheck',
+                        value: false,
+                        margin: 10
+                    });
+                }
+            }
         }
         //Ext.getCmp('riskweighting').on('click', function(args) { debugger;})
 
@@ -784,8 +774,9 @@ Ext.define('CustomApp', {
 
         weightedWsjfCol = {
             dataIndex: 'weightedWSJF',
-            text: 'Calculated WSJF',
-            align: 'center'
+            text: 'Weighted WSJF',
+            align: 'center',
+            editor: null
         };
 
         columnCfgs.push(weightedWsjfCol);
