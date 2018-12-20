@@ -12,9 +12,7 @@ If any filter is applied (i.e. via query box or by using a page filtered by rele
 
 ## Features
 
-Inline editing:
-
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/inline%20editing.jpg)
+Inline editing is disabled apart from setting the Preliminary Estimate Sizing (if chosen in the options)
 
 Normal editing menu:
 
@@ -24,6 +22,8 @@ Bulk editing to standard values:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/Bulk%20edit%20menu.png)
 
+There is now the option to select negative numbers in terms of Impact. The app with take the magnitude of the impact and ignore the sign when calculating the WSJF figure.
+
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/fibonacci.png)
 
 The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
@@ -31,6 +31,8 @@ The standard values can be changed in the data blocks at the end of the source c
 Commit of viewed WSJF table as rank in the database:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.jpg)
+
+The app relies on custom fields to be present on each project node. The fields should be created at the workspace level only. The app also requires the four impact fields to be present on the Portfolio Item type as a field type 'String' (not integer or decimal!)
 
 ## Helper messages
 
