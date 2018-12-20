@@ -772,9 +772,25 @@ Ext.define('CustomApp', {
 
         columnCfgs.push(sizeCol);
 
+        var tpl = new Ext.XTemplate(
+            '<div class="{[this.cellCheck(values)]}">{c_weightedWSJF}</div>',
+            {
+                cellCheck: function(values) { 
+                    if (values.c_weightedWSJF != values.WSJFScore) {
+                        return 'notcomparable';
+                    }
+                    else {
+                        return 'comparable';
+                    }
+                }
+            }
+        );
         weightedWsjfCol = {
             dataIndex: 'weightedWSJF',
             text: 'Weighted WSJF',
+            xtype: 'templatecolumn',
+//            tpl: '<div style="background-color:{[debugger;]};">{c_weightedWSJF}</div>',
+            tpl: tpl,
             align: 'center',
             editor: null
         };
