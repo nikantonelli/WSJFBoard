@@ -7,15 +7,7 @@
 
     <script type="text/javascript">
         Rally.onReady(function () {
-                Ext.define('MyCustomGird', {
-    extend: 'Rally.ui.grid.Grid',
-
-    _requiresRefresh: function() {
-    }
-
-});
-
-Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
+                Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
     extend: 'Ext.AbstractPlugin',
     alias: 'plugin.rallydependenciesplugin',
     require: ['Rally.ui.popover.DependenciesPopover'],
@@ -1038,6 +1030,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
 
         var negativeSelect = Ext.create('Ext.form.field.Checkbox', {
             boxLabel: 'Negative',
+            margin: '0 0 0 20',
             checked: false,
             id: 'negativeCheck'
         });
@@ -1050,6 +1043,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
             width: 300,
             records: this.records,
             title: chooserTitle,
+            layout: 'hbox',
             items: [localBox, negativeSelect],
             buttons: [{
                 text: 'OK',
@@ -1470,24 +1464,7 @@ Ext.define('wsjfBulkSetSize', {
 
 
     <style type="text/css">
-        .app {
-  /* Add app styles here */
-}
-.rbsBar {
-  color: #c000c0;
-  background-color: #f5d9f5;
-}
-.rbsBar-bar {
-  color: #808080;
-  width: '100px';
-}
-.rbsBar-text {
-  color: #000000;
-}
-.rbsBar-text-back {
-  color: #ff0000;
-}
-
+        
     </style>
 </head>
 <body>

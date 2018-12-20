@@ -1021,6 +1021,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
 
         var negativeSelect = Ext.create('Ext.form.field.Checkbox', {
             boxLabel: 'Negative',
+            margin: '0 0 0 20',
             checked: false,
             id: 'negativeCheck'
         });
@@ -1033,6 +1034,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
             width: 300,
             records: this.records,
             title: chooserTitle,
+            layout: 'hbox',
             items: [localBox, negativeSelect],
             buttons: [{
                 text: 'OK',
