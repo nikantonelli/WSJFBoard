@@ -23,7 +23,8 @@ Normal editing menu:
 Bulk editing to standard values:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/Bulk%20edit%20menu.png)
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/fibonacci.jpg)
+
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/fibonacci.png)
 
 The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
 
