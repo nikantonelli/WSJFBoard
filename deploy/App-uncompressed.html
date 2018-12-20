@@ -132,6 +132,19 @@ Ext.define('CustomApp', {
 
     id: 'wsjfApp',
 
+    config: {
+        defaultSettings: {
+            useWSJFOverLoad: true,
+            usePrelim: false,
+            showFilter: false,
+            useWSJFReadOnly: true,
+            useStateField: false,
+            useProjectField: false,
+            useWSJFAutoSort: true,
+            showChange: true,
+            globalOverride: true
+        }
+    },
     _customFields: ['c_CostImpactWeighting','c_CustomerImpactWeighting','c_RiskImpactWeighting','c_RevenueImpactWeighting'],
 
     stateful: true,
@@ -174,7 +187,7 @@ Ext.define('CustomApp', {
             name: 'usePrelim'
         }, {
             xtype: 'rallycheckboxfield',
-            fieldLabel: 'Recalc wWSJF on load',
+            fieldLabel: 'Overwrite WSJF on load',
             labelWidth: 200,
             name: 'useWSJFOverLoad'
         }, {
@@ -207,6 +220,11 @@ Ext.define('CustomApp', {
             fieldLabel: 'Allow Weighting Changes',
             labelWidth: 200,
             name: 'showChange',
+        },{
+            xtype: 'rallycheckboxfield',
+            fieldLabel: 'Allow Global Rank Override',
+            labelWidth: 200,
+            name: 'globalOverride',
         }];
     },
 
@@ -321,14 +339,15 @@ Ext.define('CustomApp', {
             });
 
             //Add the option to commit first record to top of global rank.
-            // Ext.getCmp('headerBox').add({
-            //     xtype: 'rallycheckboxfield',
-            //     fieldLabel: 'Override global rank',
-            //     id: 'globalCheck',
-            //     value: false,
-            //     margin: 10
-            // });
-
+            if (app.getSetting('globalOverride')){
+                Ext.getCmp('headerBox').add({
+                    xtype: 'rallycheckboxfield',
+                    fieldLabel: 'Override global rank',
+                    id: 'globalCheck',
+                    value: false,
+                    margin: 10
+                });
+            }
         }
 
         //Add fields to show current project weighting
@@ -461,7 +480,7 @@ Ext.define('CustomApp', {
                     {
                         xtype: 'rallyslider',
                         id: 'costSlider',
-                        value: (project.get('c_CustomerImpactWeighting') || 100),
+                        value: (project.get('c_CostImpactWeighting') || 100),
                         minValue: 0,
                         maxValue:100,
                         vertical: true,
@@ -556,18 +575,23 @@ Ext.define('CustomApp', {
         var selected = projectChooser.getSelectedRecord();
         var risk = sliders.getComponent('riskSlider').getSubmitValue();
         Ext.getCmp('riskweighting').updateProgress(risk/100);
+        Ext.getCmp('riskweighting').updateText(risk);
         var cost = sliders.getComponent('costSlider').getSubmitValue();
         Ext.getCmp('costweighting').updateProgress(cost/100);
+        Ext.getCmp('costweighting').updateText(cost);
         var cust = sliders.getComponent('custSlider').getSubmitValue();
         Ext.getCmp('custweighting').updateProgress(cust/100);
+        Ext.getCmp('custweighting').updateText(cust);
         var revn = sliders.getComponent('revnSlider').getSubmitValue();
         Ext.getCmp('revnweighting').updateProgress(revn/100);
+        Ext.getCmp('revnweighting').updateText(revn);
         selected.set('c_RiskImpactWeighting', risk);
         selected.set('c_CustomerImpactWeighting', cust);
         selected.set('c_CostImpactWeighting', cost);
         selected.set('c_RevenueImpactWeighting', revn);
         selected.save({
             callback: function() {
+                console.log("save selected");
                 Ext.getCmp('piGrid').refresh();
                 
             }
@@ -845,25 +869,21 @@ Ext.define('CustomApp', {
                     if (app.getSetting('useWSJFOverLoad')) {
                         _.each(records, this._saveWSJF);
                     }
-                    // _.each(records, function(record) {
-                    //     record.set('weightedWSJF', app._calcWeightedWSJF(record));
-                    // });
                 }
             },
 
             _saveWSJF: function(record) {
 
+                if (!(record.get('weightedWSJF'))) { return; }  //The field might not be visible
                 var num  = app._calcWeightedWSJF(record);
                 var oldVal = record.get('weightedWSJF') && record.get('weightedWSJF');
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
 
                 if (num !== oldVal) {
-                    record.set('weightedWSJF', num);
+                    record.set('weightedWSJF', num.toFixed(2));
                     record.save({
                         callback: function() {
-                            if (app.getSetting('useWSJFAutoSort')) {
-                                Ext.getCmp('piGrid').refresh();
-                            }
+                            console.log('Updated weightedWSJF for ',record.get('FormattedID'));
                         }
                     });
                 }
@@ -927,20 +947,20 @@ Ext.define('CustomApp', {
         this._recordToRank = 0;
         this._rankingRecord = this._store.data.items[this._recordToRank];
 
-        // if (Ext.getCmp('globalCheck').value === true) {
+        if (Ext.getCmp('globalCheck').value === true) {
 
-        //     this._rankingRecord.save({
-        //         rankTo: 'TOP',
-        //         callback: function(arg1, arg2, arg3) {
-        //             this._recordToRank += 1;
-        //             this._saveNextRecord();
-        //         },
-        //         scope: this
-        //     });
-        // } else {
+            this._rankingRecord.save({
+                rankTo: 'TOP',
+                callback: function(arg1, arg2, arg3) {
+                    this._recordToRank += 1;
+                    this._saveNextRecord();
+                },
+                scope: this
+            });
+        } else {
             this._recordToRank += 1;
             this._saveNextRecord();
-        // }
+        }
     },
 
     _saveNextRecord: function() {
@@ -1046,6 +1066,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                         record.save({
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
+                                    console.log("save chooser");
                                     Ext.getCmp('piGrid').refresh();
                                 }
                             }
@@ -1076,7 +1097,7 @@ Ext.define('wsjfBulkSetRevn', {
     config: {
         text: 'Revenue Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Revenue Impact Rating', 'c_RevnImpactRating');
+            this._onSetParam('Choose Revenue Impact Rating', 'c_RevenueImpactRating');
         },
 
         data: [{
