@@ -889,7 +889,7 @@ Ext.define('CustomApp', {
 
             _saveWSJF: function(record) {
 
-                if (!(record.get('weightedWSJF'))) { return; }  //The field might not be visible
+                if (!(record.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
                 var num  = app._calcWeightedWSJF(record);
                 var oldVal = record.get('weightedWSJF') && record.get('weightedWSJF');
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
