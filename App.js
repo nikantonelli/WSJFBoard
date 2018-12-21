@@ -490,7 +490,6 @@ Ext.define('CustomApp', {
                                         ]
                                     }
                                 ],
-//                                    projChooser, doChildren, sliders],
                                 autoShow: true,
                                 closable: true,
                                 // draggable: true,
@@ -949,7 +948,7 @@ Ext.define('CustomApp', {
         this._recordToRank = 0;
         this._rankingRecord = this._store.data.items[this._recordToRank];
 
-        if (Ext.getCmp('globalCheck').value === true) {
+        if (Ext.getCmp('globalCheck') && (Ext.getCmp('globalCheck').value === true)) {
 
             this._rankingRecord.save({
                 rankTo: 'TOP',
