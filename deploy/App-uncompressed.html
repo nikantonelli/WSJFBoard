@@ -434,7 +434,8 @@ Ext.define('CustomApp', {
                 items: [{
                     xtype: 'rallycheckboxfield',
                     fieldLabel: 'Change all children projects',
-                    id: 'doChildrenId'
+                    id: 'doChildrenId',
+                    disabled: true
                 }]
             });
 
@@ -504,27 +505,20 @@ Ext.define('CustomApp', {
                                 draggable: true,
                                 width: 400,
                                 title: 'Choose Projects to Change',
-//                                items: [projChooser, doChildren, sliders],
                                 listeners: {
                                     afterrender: function() {
-                                        debugger;
-                                        var p = Ext.clone(projChooser);
-                                        var c = Ext.clone(doChildren);
-                                        var s = Ext.clone(sliders);
-                                        this.add(p);
-                                        this.add(c);
-                                        this.add(s);
-                                        p.on('expand', this._enableOK);
+                                        projChooser.on('expand', this._enableOK);
                                     }
                                 },
+                                items: [projChooser, doChildren, sliders],
                                 buttons: [
                                     {
                                         text: 'OK',
                                         disabled: true,
                                         id: 'OKbutton',
                                         handler: function(arg1, arg2, arg3) {
-                                            //Get all the projectCHoosers selection
-                                            app._changeProjectWeightings(projectChooser, doChildren, sliders);
+                                            //Get all the projectChoosers selection
+                                            app._changeProjectWeightings(projChooser, doChildren, sliders);
                                             var records = Ext.getCmp('piGrid').store.getRecords();
                                             _.each(records, app._saveWSJF, app);
                                             Ext.getCmp('piGrid').getView().refresh();

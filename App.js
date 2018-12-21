@@ -425,7 +425,8 @@ Ext.define('CustomApp', {
                 items: [{
                     xtype: 'rallycheckboxfield',
                     fieldLabel: 'Change all children projects',
-                    id: 'doChildrenId'
+                    id: 'doChildrenId',
+                    disabled: true
                 }]
             });
 
@@ -500,6 +501,7 @@ Ext.define('CustomApp', {
                                         projChooser.on('expand', this._enableOK);
                                     }
                                 },
+                                items: [projChooser, doChildren, sliders],
                                 buttons: [
                                     {
                                         text: 'OK',
