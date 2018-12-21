@@ -2,6 +2,9 @@ WSJFBoard
 =========================
 
 ## Overview
+
+The app relies on custom fields to be present on each project node. The fields should be created at the workspace level only. The app also requires the four impact fields to be present on the Portfolio Item type as a field type 'String' (not integer or decimal!)
+
 Grid board to calculate WSJF from Risk, Value, TimeCriticality and JobSize and re-rank within Rally.  Add to a board with a Release filter in its options to show lowest level Portfolio Item types with a 'Release' timebox setting.
 
 The app will apply weightings depending on the project node that you are in. This is so you can assign impact ratings to each Portfolio item, but then the app will apply a global bias to those. This is so tha, as an organisation, there might be more emphasis on one of the categories for the next planning period. By adjusting the weightings, you can re-order the items without having to go through each individual portfolio item resetting the impact ratings.
@@ -34,7 +37,6 @@ Commit of viewed WSJF table as rank in the database:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.jpg)
 
-The app relies on custom fields to be present on each project node. The fields should be created at the workspace level only. The app also requires the four impact fields to be present on the Portfolio Item type as a field type 'String' (not integer or decimal!)
 
 ## Helper messages
 
