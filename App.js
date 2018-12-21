@@ -310,7 +310,6 @@ Ext.define('CustomApp', {
         //Add fields to show current project weighting
         var vbox = Ext.getCmp('headerBox').add({
             xtype: 'container',
-            id: 'weightingBox',
             layout: 'hbox',
             items: [
                 {
@@ -479,55 +478,63 @@ Ext.define('CustomApp', {
                 ]
             });
 
-            Ext.getCmp('headerBox').add({
-                xtype: 'rallybutton',
-                margin: 10,
-                text: 'Change Weightings',
-                handler: function() {
-                    var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
-                        id: 'projectChooser',
-                        autoShow: true,
-                        draggable: true,
-                        width: 400,
-                        title: 'Choose Projects to Change',
-                        items: [projectChooser, doChildren, sliders],
-                        listeners: {
-                            afterrender: function() {
-                                projectChooser.on('expand', this._enableOK);
-                            }
-                        },
-                        buttons: [
-                            {
-                                text: 'OK',
-                                disabled: true,
-                                id: 'OKbutton',
-                                handler: function(arg1, arg2, arg3) {
-                                    //Get all the projectCHoosers selection
-                                    app._changeProjectWeightings(projectChooser, doChildren, sliders);
-                                    var records = Ext.getCmp('piGrid').store.getRecords();
-                                    _.each(records, app._saveWSJF);
-                                    Ext.getCmp('projectChooser').destroy();
+            //Ext.getCmp('headerBox').add({
+            var weightingBox = Ext.create( 'Ext.Container', {
+                id: 'weightingBox',
+                hidden: true,
+                hideMode: 'offsets',
+                items: [ 
+                    {
+                        xtype: 'rallybutton',
+                        margin: 10,
+                        text: 'Change Weightings',
+                        handler: function() {
+                            var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
+                                id: 'projectChooser',
+                                autoShow: true,
+                                draggable: true,
+                                width: 400,
+                                title: 'Choose Projects to Change',
+                                items: [projectChooser, doChildren, sliders],
+                                listeners: {
+                                    afterrender: function() {
+                                        projectChooser.on('expand', this._enableOK);
+                                    }
                                 },
-                            },
-                            {
-                                  text: 'Cancel',
-                                  handler: function() {
-                                    Ext.getCmp('projectChooser').destroy();
+                                buttons: [
+                                    {
+                                        text: 'OK',
+                                        disabled: true,
+                                        id: 'OKbutton',
+                                        handler: function(arg1, arg2, arg3) {
+                                            //Get all the projectCHoosers selection
+                                            app._changeProjectWeightings(projectChooser, doChildren, sliders);
+                                            var records = Ext.getCmp('piGrid').store.getRecords();
+                                            _.each(records, app._saveWSJF);
+                                            Ext.getCmp('projectChooser').destroy();
+                                        },
+                                    },
+                                    {
+                                        text: 'Cancel',
+                                        handler: function() {
+                                            Ext.getCmp('projectChooser').destroy();
+                                        }
+                                    }
+                                ],
+                                scope: app,
+                                _enableOK: function() {
+                                    Ext.getCmp('OKbutton').enable();
                                 }
-                            }
-                        ],
-                        scope: app,
-                        _enableOK: function() {
-                            Ext.getCmp('OKbutton').enable();
+                            });
                         }
-                    });
-                }
+                    }
+                ]
             });
-            //We should prevent re-ordering of rank if we have sub-sampled by release
+            //We should prevent re-ordering of rank if we have sub-sampled by release or a filter
             //It makes for a confusing result otherwise
             var timeboxscope = this.getContext().getTimeboxScope();
             if (!timeboxscope && !app.getSetting('showFilter')) {
-                Ext.getCmp('headerBox').add({
+                weightingBox.add({
                     xtype: 'rallybutton',
                     id: 'MakeItSo',
                     margin: 10,
@@ -538,16 +545,18 @@ Ext.define('CustomApp', {
 
                 //Add the option to commit first record to top of global rank.
                 if (app.getSetting('globalOverride')){
-                    Ext.getCmp('headerBox').add({
+                    weightingBox.add({
                         xtype: 'rallycheckboxfield',
                         fieldLabel: 'Override global rank',
                         id: 'globalCheck',
                         value: false,
-                        margin: 10
+//                        margin: 10
                     });
                 }
             }
+            Ext.getCmp('headerBox').add(weightingBox);
         }
+
         //Ext.getCmp('riskweighting').on('click', function(args) { debugger;})
 
     },
@@ -867,6 +876,13 @@ Ext.define('CustomApp', {
                     var records = store.getRecords();
                     if (app.getSetting('useWSJFOverLoad')) {
                         _.each(records, this._saveWSJF);
+                    }
+                    //Check to see if we are in a place where the weightedWSJF is visible
+                    //If they are not, then turn off the WeightingBox
+                    if (records[0] && records[0].raw.hasOwnProperty('c_weightedWSJF')) {
+                        Ext.getCmp('weightingBox').show();
+                    } else {
+                        Ext.getCmp('weightingBox').hide();
                     }
                 }
             },
