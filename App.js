@@ -330,9 +330,9 @@ Ext.define('CustomApp', {
                                     xtype: 'progressbar',
                                     id: 'costweighting',
                                     width: '120px',
-                                    value: (project.get('c_CostImpactWeighting') || 100)/100,
+                                    value: project.get('c_CostImpactWeighting')/100,
                                     margin: '10 0 10 0',
-                                    text: (project.get('c_CostImpactWeighting') || 100)
+                                    text: project.get('c_CostImpactWeighting')
                                 }
                             ]
                         },{
@@ -349,9 +349,9 @@ Ext.define('CustomApp', {
                                     xtype: 'progressbar',
                                     id: 'custweighting',
                                     width: '120px',
-                                    value: (project.get('c_CustomerImpactWeighting') || 100)/100,
+                                    value: project.get('c_CustomerImpactWeighting')/100,
                                     margin: '0 0 10 0',
-                                    text: (project.get('c_CustomerImpactWeighting') || 100),
+                                    text: project.get('c_CustomerImpactWeighting'),
                                 }
                             ]
                         }
@@ -375,9 +375,9 @@ Ext.define('CustomApp', {
                                     xtype: 'progressbar',
                                     id: 'revnweighting',
                                     width: '120px',
-                                    value: (project.get('c_RevenueImpactWeighting') || 100)/100,
+                                    value: project.get('c_RevenueImpactWeighting') /100,
                                     margin: '10 0 10 0',
-                                    text: (project.get('c_RevenueImpactWeighting') || 100)
+                                    text: project.get('c_RevenueImpactWeighting')
                                 }
                             ]
                         },{
@@ -394,9 +394,9 @@ Ext.define('CustomApp', {
                                     xtype: 'progressbar',
                                     id: 'riskweighting',
                                     width: '120px',
-                                    value: (project.get('c_RiskImpactWeighting') || 100)/100,
+                                    value: project.get('c_RiskImpactWeighting')/100,
                                     margin: '0 0 10 0',
-                                    text: (project.get('c_RiskImpactWeighting') || 100)
+                                    text: project.get('c_RiskImpactWeighting')
                                 }
                             ]
                         }
@@ -510,14 +510,15 @@ Ext.define('CustomApp', {
                                             //Get all the projectCHoosers selection
                                             app._changeProjectWeightings(projectChooser, doChildren, sliders);
                                             var records = Ext.getCmp('piGrid').store.getRecords();
-                                            _.each(records, app._saveWSJF);
-                                            Ext.getCmp('projectChooser').destroy();
+                                            _.each(records, app._saveWSJF, app);
+                                            Ext.getCmp('piGrid').getView().refresh();
+                                            doChooser.destroy();
                                         },
                                     },
                                     {
                                         text: 'Cancel',
                                         handler: function() {
-                                            Ext.getCmp('projectChooser').destroy();
+                                            doChooser.destroy();
                                         }
                                     }
                                 ],
@@ -581,9 +582,7 @@ Ext.define('CustomApp', {
         selected.set('c_RevenueImpactWeighting', revn);
         selected.save({
             callback: function() {
-                console.log("save selected");
-                Ext.getCmp('piGrid').refresh();
-                
+                console.log("saved weightings: ", cost, cust, revn, risk);              
             }
         });
         
@@ -785,10 +784,10 @@ Ext.define('CustomApp', {
             '<div {[this.cellCheck(values)]}>{[this.cellFormat(values.c_weightedWSJF)]}</div>',
             {
                 cellCheck: function(values) { 
-                    if (values.c_weightedWSJF > values.WSJFScore) {
+                    if (values.c_weightedWSJF.toFixed(2) > values.WSJFScore) {
                         return 'class="upgradedItem"';
                     }
-                    else  if (values.c_weightedWSJF < values.WSJFScore) {
+                    else  if (values.c_weightedWSJF.toFixed(2) < values.WSJFScore) {
                         return 'class="downgradedItem"';
                     }
                     else {return '';}
@@ -873,12 +872,12 @@ Ext.define('CustomApp', {
 
             listeners: {
                 inlineeditsaved: function(grid, record, opts) {
-                    this._saveWSJF(record);
+                    app._saveWSJF(record);
                 },
                 load: function(store) {
                     var records = store.getRecords();
                     if (app.getSetting('useWSJFOverLoad')) {
-                        _.each(records, this._saveWSJF);
+                        _.each(records, app._saveWSJF, app);
                     }
                     //Check to see if we are in a place where the weightedWSJF is visible
                     //If they are not, then turn off the WeightingBox
@@ -887,26 +886,9 @@ Ext.define('CustomApp', {
                     } else {
                         Ext.getCmp('weightingBox').hide();
                     }
-                }
+                },
+                scope: app
             },
-
-            _saveWSJF: function(record) {
-
-                if (!(record.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
-                var num  = app._calcWeightedWSJF(record);
-                var oldVal = record.get('weightedWSJF') && record.get('weightedWSJF');
-                //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
-
-                if (num !== oldVal) {
-                    record.set('weightedWSJF', num.toFixed(2));
-                    record.save({
-                        callback: function() {
-                            console.log('Updated weightedWSJF for ',record.get('FormattedID'));
-                        }
-                    });
-                }
-            }
-
         });
 
 //                Ext.util.Observable.capture( grid, function(event) { console.log(event, arguments);});
@@ -914,22 +896,20 @@ Ext.define('CustomApp', {
         this.add(grid);
 
     },
+    _saveWSJF: function(record) {
+        if (!(record.raw.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
+        var num  = this._calcWeightedWSJF(record);
+        var oldVal = record.get('weightedWSJF').toFixed(2);
+        //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
 
-    _calcWSJF: function(record) {
-        var num = 0.0;
-        num = ( Math.abs(parseInt(record.get('c_RevenueImpactRating') || 0)) + 
-        Math.abs(parseFloat(record.get('c_CostImpactRating') || 0)) + 
-        Math.abs(parseFloat(record.get('c_CustomerImpactRating') || 0)) + 
-        Math.abs(parseFloat(record.get('c_RiskImpactRating') || 0)) );
-        if (Ext.getCmp('wsjfApp').getSetting('usePrelim')) {
-            // If no Prelim value, we will assume '1', so no calc needed.
-            if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
-                num = num / record.get('PreliminaryEstimate').Value;
-            }
-        } else {
-            num = num / record.get('JobSize');
+        if (num !== oldVal) {
+            record.set('weightedWSJF', num.toFixed(2));
+            record.save({
+                callback: function() {
+                    console.log('Updated weightedWSJF for ',record.get('FormattedID'));
+                }
+            });
         }
-        return num;
     },
 
     _calcWeightedWSJF: function(record) {
@@ -1159,7 +1139,7 @@ Ext.define('wsjfBulkSetRisk', {
     config: {
         text: 'Risk Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Revenue Impact Rating', 'c_RiskImpactRating');
+            this._onSetParam('Choose Risk Impact Rating', 'c_RiskImpactRating');
         },
 
         data: [{
@@ -1201,7 +1181,7 @@ Ext.define('wsjfBulkSetCust', {
     config: {
         text: 'Customer Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Revenue Impact Rating', 'c_CustomerImpactRating');
+            this._onSetParam('Choose Customer Impact Rating', 'c_CustomerImpactRating');
         },
 
         data: [{
@@ -1244,7 +1224,7 @@ Ext.define('wsjfBulkSetCost', {
     config: {
         text: 'Cost Impact Rating',
         handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Revenue Impact Rating', 'c_CostImpactRating');
+            this._onSetParam('Choose Cost Impact Rating', 'c_CostImpactRating');
         },
 
         data: [{
