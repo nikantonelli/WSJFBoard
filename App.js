@@ -782,7 +782,7 @@ Ext.define('CustomApp', {
         columnCfgs.push(sizeCol);
 
         var tpl = new Ext.XTemplate(
-            '<div {[this.cellCheck(values)]}>{c_weightedWSJF}</div>',
+            '<div {[this.cellCheck(values)]}>{[this.cellFormat(values.c_weightedWSJF)]}</div>',
             {
                 cellCheck: function(values) { 
                     if (values.c_weightedWSJF > values.WSJFScore) {
@@ -792,6 +792,9 @@ Ext.define('CustomApp', {
                         return 'class="downgradedItem"';
                     }
                     else {return '';}
+                },
+                cellFormat: function(wsjf) {
+                    return wsjf.toFixed(2);
                 }
             }
         );
