@@ -411,7 +411,7 @@ Ext.define('CustomApp', {
 //        weAreAdmin = true;  //Debugger
 
         if (weAreAdmin) {
-            var projectChooser = Ext.create('Rally.ui.picker.project.ProjectPicker', {
+            var projChooser = Ext.create('Rally.ui.picker.project.ProjectPicker', {
                     id: 'projectChooserId',
                     listeners: {
                         expand: function(args) {
@@ -495,10 +495,9 @@ Ext.define('CustomApp', {
                                 draggable: true,
                                 width: 400,
                                 title: 'Choose Projects to Change',
-                                items: [projectChooser, doChildren, sliders],
                                 listeners: {
                                     afterrender: function() {
-                                        projectChooser.on('expand', this._enableOK);
+                                        projChooser.on('expand', this._enableOK);
                                     }
                                 },
                                 buttons: [
@@ -507,18 +506,18 @@ Ext.define('CustomApp', {
                                         disabled: true,
                                         id: 'OKbutton',
                                         handler: function(arg1, arg2, arg3) {
-                                            //Get all the projectCHoosers selection
-                                            app._changeProjectWeightings(projectChooser, doChildren, sliders);
+                                            //Get all the projectChoosers selection
+                                            app._changeProjectWeightings(projChooser, doChildren, sliders);
                                             var records = Ext.getCmp('piGrid').store.getRecords();
                                             _.each(records, app._saveWSJF, app);
                                             Ext.getCmp('piGrid').getView().refresh();
-                                            doChooser.destroy();
+                                            Ext.getCmp('projectChooser').destroy();
                                         },
                                     },
                                     {
                                         text: 'Cancel',
                                         handler: function() {
-                                            doChooser.destroy();
+                                            Ext.getCmp('projectChooser').destroy();
                                         }
                                     }
                                 ],
