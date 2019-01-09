@@ -414,12 +414,14 @@ Ext.define('CustomApp', {
             ]
         });
         //If we are subscription admin, allow for setting of the project variables
+        app.weAreAdmin = false;
+        
+        if (project.get('c_controlWSJF')) 
+        {
+            app.weAreAdmin = app.getSetting('showChange');
+        }
 
-        var weAreAdmin = app.getSetting('showChange');
-
-//        weAreAdmin = true;  //Debugger
-
-        if (weAreAdmin) {
+        if (app.weAreAdmin) {
             //Ext.getCmp('headerBox').add({
             var weightingBox = Ext.create( 'Ext.Container', {
                 id: 'weightingBox',
@@ -430,6 +432,9 @@ Ext.define('CustomApp', {
                         xtype: 'rallybutton',
                         margin: 10,
                         text: 'Change Weightings',
+                        style: {
+                            backgroundColor: '#396295',
+                        },
                         handler: function() {
                             var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
                                 id: 'projectChooser',
@@ -552,6 +557,9 @@ Ext.define('CustomApp', {
                     id: 'MakeItSo',
                     margin: 10,
                     text: 'Commit Weighted WSJF',
+                    style: {
+                        backgroundColor: '#396295',
+                    },
                     handler: this._storeRecords,
                     scope: this
                 });
@@ -715,12 +723,12 @@ Ext.define('CustomApp', {
             },
             editor: null
         }, {
-            dataIndex: 'c_RiskImpactRating',
-            text: 'Risk Impact',
+            dataIndex: 'c_RevenueImpactRating',
+            text: 'Revenue Impact',
             align: 'center',
             listeners: {
                 afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetRisk');
+                    thisMenu = Ext.create('wsjfBulkSetRevn');
                     helpHTML = thisMenu.getHelp();
                     Ext.create('Rally.ui.tooltip.ToolTip', {
                         target: this.getEl(),
@@ -745,12 +753,12 @@ Ext.define('CustomApp', {
             },
             editor: null
         }, {
-            dataIndex: 'c_RevenueImpactRating',
-            text: 'Revenue Impact',
+            dataIndex: 'c_RiskImpactRating',
+            text: 'Risk Impact',
             align: 'center',
             listeners: {
                 afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetRevn');
+                    thisMenu = Ext.create('wsjfBulkSetRisk');
                     helpHTML = thisMenu.getHelp();
                     Ext.create('Rally.ui.tooltip.ToolTip', {
                         target: this.getEl(),
@@ -810,10 +818,9 @@ Ext.define('CustomApp', {
             }
         );
         weightedWsjfCol = {
-            dataIndex: 'weightedWSJF',
+            dataIndex: 'c_weightedWSJF',
             text: 'Weighted WSJF',
             xtype: 'templatecolumn',
-//            tpl: '<div style="background-color:{[debugger;]};">{c_weightedWSJF}</div>',
             tpl: tpl,
             align: 'center',
             editor: null
@@ -872,13 +879,13 @@ Ext.define('CustomApp', {
                 batchAction: true,
                 model: modelNames,
                 sorters: [{
-                    property: 'weightedWSJF',
+                    property: 'c_weightedWSJF',
                     direction: 'DESC'
                 }, {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'c_controlWSJF', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
                 filters: app._getFilters(app)
             },
 
@@ -893,11 +900,9 @@ Ext.define('CustomApp', {
                     }
                     //Check to see if we are in a place where the weightedWSJF is visible
                     //If they are not, then turn off the WeightingBox
-                    if (records[0] && records[0].raw.hasOwnProperty('c_weightedWSJF')) {
+                    if (app.weAreAdmin) {
                         Ext.getCmp('weightingBox').show();
-                    } else {
-                        Ext.getCmp('weightingBox').hide();
-                    }
+                    } 
                 },
                 scope: app
             },
@@ -911,14 +916,14 @@ Ext.define('CustomApp', {
     _saveWSJF: function(record) {
         if (!(record.raw.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
         var num  = this._calcWeightedWSJF(record);
-        var oldVal = record.get('weightedWSJF').toFixed(2);
+        var oldVal = record.get('c_weightedWSJF').toFixed(2);
         //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
 
         if (num !== oldVal) {
-            record.set('weightedWSJF', num.toFixed(2));
+            record.set('c_weightedWSJF', num.toFixed(2));
             record.save({
                 callback: function() {
-                    console.log('Updated weightedWSJF for ',record.get('FormattedID'));
+                    console.log('Updated weightedWSJF for ',record.get('FormattedID'), ' to: ', record.get('c_weightedWSJF'));
                 }
             });
         }
@@ -949,7 +954,7 @@ Ext.define('CustomApp', {
         this._store = Ext.getCmp('piGrid').store;
         var records = this._store.getRecords();
         _.each(records, function (record) {
-            record.set ('WSJFScore', record.get('weightedWSJF').toFixed(2));
+            record.set ('WSJFScore', record.get('c_weightedWSJF').toFixed(2));
             record.save();
         });
         this._store.sync();
@@ -1018,7 +1023,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
         html = '';
 
         _.each(this.config.data, function(record) {
-            html += '<p><strong>' + record.Name + record.Description + '</strong></p>';
+            html += '<p><strong>' + record.Name + ' ' + record.Description + '</strong></p>';
         });
 
         return html;
@@ -1074,7 +1079,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                         var num = Ext.getCmp('wsjfApp')._calcWeightedWSJF(record);
 
                         //if the field is 'decimal' you can only have two decimal places....
-                        record.set('weightedWSJF', num);
+                        record.set('c_weightedWSJF', num);
                         record.save({
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
@@ -1115,31 +1120,31 @@ Ext.define('wsjfBulkSetRevn', {
         data: [{
             'Name': 'None',
             'Value': 0,
-            'Description': ''
+            'Description': '(0)'
         }, {
             'Name': 'Minimal',
             'Value': 1,
-            'Description': ''
+            'Description': '(1)'
         }, {
             'Name': 'Low',
             'Value': 2,
-            'Description': ''
+            'Description': '(2)'
         }, {
             'Name': 'Medium',
             'Value': 3,
-            'Description': ''
+            'Description': '(3)'
         }, {
             'Name': 'High',
             'Value': 5,
-            'Description': ''
+            'Description': '(5)'
         }, {
             'Name': 'Very High',
             'Value': 8,
-            'Description': ''
+            'Description': '(8)'
         }, {
             'Name': 'Extreme',
             'Value': 13,
-            'Description': ''
+            'Description': '(13)'
         }]
     }
 });
@@ -1157,31 +1162,31 @@ Ext.define('wsjfBulkSetRisk', {
         data: [{
             'Name': 'None',
             'Value': 0,
-            'Description': ''
+            'Description': '(0)'
         }, {
             'Name': 'Minimal',
             'Value': 1,
-            'Description': ''
+            'Description': '(1)'
         }, {
             'Name': 'Low',
             'Value': 2,
-            'Description': ''
+            'Description': '(2)'
         }, {
             'Name': 'Medium',
             'Value': 3,
-            'Description': ''
+            'Description': '(3)'
         }, {
             'Name': 'High',
             'Value': 5,
-            'Description': ''
+            'Description': '(5)'
         }, {
             'Name': 'Very High',
             'Value': 8,
-            'Description': ''
+            'Description': '(8)'
         }, {
             'Name': 'Extreme',
             'Value': 13,
-            'Description': ''
+            'Description': '(13)'
         }]
     }
 });
@@ -1199,31 +1204,31 @@ Ext.define('wsjfBulkSetCust', {
         data: [{
             'Name': 'None',
             'Value': 0,
-            'Description': ''
+            'Description': '(0)'
         }, {
             'Name': 'Minimal',
             'Value': 1,
-            'Description': ''
+            'Description': '(1)'
         }, {
             'Name': 'Low',
             'Value': 2,
-            'Description': ''
+            'Description': '(2)'
         }, {
             'Name': 'Medium',
             'Value': 3,
-            'Description': ''
+            'Description': '(3)'
         }, {
             'Name': 'High',
             'Value': 5,
-            'Description': ''
+            'Description': '(5)'
         }, {
             'Name': 'Very High',
             'Value': 8,
-            'Description': ''
+            'Description': '(8)'
         }, {
             'Name': 'Extreme',
             'Value': 13,
-            'Description': ''
+            'Description': '(13)'
         }]
     }
 });
@@ -1242,31 +1247,31 @@ Ext.define('wsjfBulkSetCost', {
         data: [{
             'Name': 'None',
             'Value': 0,
-            'Description': ''
+            'Description': '(0)'
         }, {
             'Name': 'Minimal',
             'Value': 1,
-            'Description': ''
+            'Description': '(1)'
         }, {
             'Name': 'Low',
             'Value': 2,
-            'Description': ''
+            'Description': '(2)'
         }, {
             'Name': 'Medium',
             'Value': 3,
-            'Description': ''
+            'Description': '(3)'
         }, {
             'Name': 'High',
             'Value': 5,
-            'Description': ''
+            'Description': '(5)'
         }, {
             'Name': 'Very High',
             'Value': 8,
-            'Description': ''
+            'Description': '(8)'
         }, {
             'Name': 'Extreme',
             'Value': 13,
-            'Description': ''
+            'Description': '(13)'
         }]
     }
 });
