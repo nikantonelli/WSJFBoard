@@ -51,8 +51,6 @@ Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
             } else {
                 popoverOptions.record = record;
             }
-
-            this.cmp.recordAction({description: 'showing formatted id hover on grid'});
             Rally.ui.popover.PopoverFactory.bake(popoverOptions);
         }
     },
@@ -112,7 +110,7 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
 Ext.define('CustomApp', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
-
+    settingsScope: 'project',
     id: 'wsjfApp',
 
     config: {
@@ -128,7 +126,7 @@ Ext.define('CustomApp', {
             globalOverride: true
         }
     },
-    _customFields: ['c_CostImpactWeighting','c_CustomerImpactWeighting','c_RiskImpactWeighting','c_RevenueImpactWeighting'],
+    _customFields: ['c_controlWSJF','c_CostImpactWeighting','c_CustomerImpactWeighting','c_RiskImpactWeighting','c_RevenueImpactWeighting'],
 
     stateful: true,
 
@@ -215,11 +213,35 @@ Ext.define('CustomApp', {
     launch: function() {
 
         var app = this;
-        Deft.Chain.pipeline([this._getProject, this._setupApp], this);
+        Deft.Chain.pipeline([this._adminStatus, this._getProject, this._setupApp], this);
 
     },
 
-    _getProject: function() {
+    _adminStatus: function () {
+        var app = this;
+        app.weAreAdmin = false;
+        var deferred = Ext.create('Deft.Deferred');
+        var globalProject = app.getContext().getGlobalContext().context.scope.projectOid;
+        Ext.create('Rally.data.wsapi.Store',{
+            model:'Project',
+            autoLoad: true,
+            fetch:['Children','Name',].concat(this._customFields),
+            filters: [ {
+                property: 'ObjectID',
+                value: globalProject
+            }],
+            limit:'Infinity',
+            listeners: {
+                load: function(store,projects) {
+                    if (projects[0].get('c_controlWSJF') ) { app.weAreAdmin = true; }
+                    deferred.resolve(projects);
+                }
+            }
+        });
+        return deferred.promise;    
+    },
+
+    _getProject: function(globalProjects) {
         var context = this.getContext();
         var project = context.getProject();
         var deferred = Ext.create('Deft.Deferred');
@@ -404,20 +426,13 @@ Ext.define('CustomApp', {
                 }
             ]
         });
-        //If we are subscription admin, allow for setting of the project variables
-        app.weAreAdmin = false;
-        
-        if (project.get('c_controlWSJF')) 
-        {
-            app.weAreAdmin = app.getSetting('showChange');
-        }
-
-        if (app.weAreAdmin) {
+        //If we are admin, allow for setting of the project variables
+        if (app.weAreAdmin ) {
             //Ext.getCmp('headerBox').add({
             var weightingBox = Ext.create( 'Ext.Container', {
                 id: 'weightingBox',
-                // hidden: true,
-                // hideMode: 'offsets',
+                hidden: true,
+                hideMode: 'offsets',
                 items: [ 
                     {
                         xtype: 'rallybutton',
@@ -457,7 +472,7 @@ Ext.define('CustomApp', {
                                                 minValue: 0,
                                                 maxValue:100,
                                                 vertical: true,
-                                                height: 200,
+                                                height: 300,
                                                 labelAlign: 'top',
                                                 fieldLabel: 'Cost',
                                                 margin: '0 0 0 10'
@@ -467,7 +482,7 @@ Ext.define('CustomApp', {
                                                 minValue: 0,
                                                 maxValue:100,
                                                 vertical: true,
-                                                height: 200,
+                                                height: 300,
                                                 value: (project.get('c_CustomerImpactWeighting') || 100),
                                                 labelAlign: 'top',
                                                 fieldLabel: 'Customer'
@@ -476,7 +491,7 @@ Ext.define('CustomApp', {
                                                 vertical: true,
                                                 minValue: 0,
                                                 maxValue:100,
-                                                height: 200,
+                                                height: 300,
                                                 id: 'revnSlider',
                                                 value: (project.get('c_RevenueImpactWeighting') || 100),
                                                 labelAlign: 'top',
@@ -484,7 +499,7 @@ Ext.define('CustomApp', {
                                             },{
                                                 xtype: 'rallyslider',
                                                 vertical: true,
-                                                height: 200,
+                                                height: 300,
                                                 minValue: 0,
                                                 maxValue:100,
                                                 id: 'riskSlider',
@@ -891,7 +906,7 @@ Ext.define('CustomApp', {
                     }
                     //Check to see if we are in a place where the weightedWSJF is visible
                     //If they are not, then turn off the WeightingBox
-                    if (app.weAreAdmin) {
+                    if (app.weAreAdmin && app.getSetting('showChange')) {
                         Ext.getCmp('weightingBox').show();
                     } 
                 },
