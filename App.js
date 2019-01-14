@@ -213,10 +213,26 @@ Ext.define('CustomApp', {
     launch: function() {
 
         var app = this;
-        Deft.Chain.pipeline([this._adminStatus, this._getProject, this._setupApp], this);
-
+        Deft.Chain.pipeline([this._adminStatus, this._getProject, this._setupApp, this._getStateValues, this._startApp], this);
     },
 
+    _getStateValues: function(type) {
+        var app = this;
+        var deferred = Ext.create('Deft.Deferred');
+        Rally.data.ModelFactory.getModel({
+            type: type
+        }). then ({
+            success: function(model){
+                app.stateValues = model.getField('State').getAllowedStringValues();
+                deferred.resolve(app);
+            },
+            failure: function() {
+                deferred.reject();
+            }
+        });
+        return deferred.promise;
+    },
+    
     _adminStatus: function () {
         var app = this;
         app.weAreAdmin = false;
@@ -264,6 +280,9 @@ Ext.define('CustomApp', {
     },
 
     _setupApp: function(projects) {
+        
+        var deferred = Ext.create('Deft.Deferred');
+
         var project = projects[0];  //Only interested in the one we are in.
         var app = this;
 
@@ -291,10 +310,8 @@ Ext.define('CustomApp', {
             margin: 10,
             listeners: {
                 ready: function() {
-                    app._startApp(app);
-                },
-                select: function() {
-                    app._startApp(app);
+                    deferred.resolve('portfolioitem/' + this.rawValue);
+                    this.on('select', function() {app._startApp(app); });
                 }
             },
             scope: this,
@@ -584,7 +601,7 @@ Ext.define('CustomApp', {
             Ext.getCmp('headerBox').add(weightingBox);
         }
 
-        //Ext.getCmp('riskweighting').on('click', function(args) { debugger;})
+        return deferred.promise;
 
     },
 
@@ -651,7 +668,7 @@ Ext.define('CustomApp', {
         filters.push({
             property: 'State.Name',
             operator: '!=',
-            value: 'Done'
+            value: app.stateValues[ app.stateValues.length - 1]
         });
 
         //Now get the settings query box and apply those settings
@@ -891,7 +908,7 @@ Ext.define('CustomApp', {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'c_controlWSJF', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'State', 'Name', 'Release', 'Project', 'JobSize', 'c_controlWSJF', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
                 filters: app._getFilters(app)
             },
 
@@ -904,6 +921,7 @@ Ext.define('CustomApp', {
                     if (app.getSetting('useWSJFOverLoad')) {
                         _.each(records, app._saveWSJF, app);
                     }
+                    grid.getView().refresh();
                     //Check to see if we are in a place where the weightedWSJF is visible
                     //If they are not, then turn off the WeightingBox
                     if (app.weAreAdmin && app.getSetting('showChange')) {
@@ -922,7 +940,7 @@ Ext.define('CustomApp', {
     _saveWSJF: function(record) {
         if (!(record.raw.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
         var num  = this._calcWeightedWSJF(record);
-        var oldVal = record.get('c_weightedWSJF').toFixed(2);
+        var oldVal = (record.get('c_weightedWSJF') || 0).toFixed(2);
         //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
 
         if (num !== oldVal) {
@@ -1090,7 +1108,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
                                     console.log("save chooser");
-                                    Ext.getCmp('piGrid').refresh();
+                                    Ext.getCmp('piGrid').getView().refresh();
                                 }
                             }
                         });
