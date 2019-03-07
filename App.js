@@ -536,7 +536,10 @@ Ext.define('CustomApp', {
                         var records = store.getRecords();
                         var me = this;
                         _.each(records, function(record) {
-                            record.set('WSJFScore',me._calcWSJF(record).toFixed(2));
+                            var num = me._calcWSJF(record).toFixed(2);
+                            if ( num !== record.get('WSJFScore').toFixed(2)) {
+                                record.set('WSJFScore',num);
+                            }
                         });
                         store.sync({
                             callback: function(batch, options) {
