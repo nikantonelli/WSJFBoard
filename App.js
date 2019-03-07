@@ -129,6 +129,17 @@ Ext.define('CustomApp', {
         this._startApp(this);
     },
 
+    config: {
+        defaultSettings: {
+            usePrelim: true,
+            useWSJFOverLoad: true,
+            useWSJFReadOnly: true,
+            useProjectField: false,
+            useStateField: false,
+            showFilter: false
+        }
+    },
+
     getSettingsFields: function() {
         return [{
             xtype: 'textarea',
@@ -523,15 +534,21 @@ Ext.define('CustomApp', {
                     if (app.getSetting('useWSJFOverLoad')) {
 
                         var records = store.getRecords();
-                        _.each(records, this._saveWSJF);
+                        var me = this;
+                        _.each(records, function(record) {
+                            record.set('WSJFScore',me._calcWSJF(record).toFixed(2));
+                        });
+                        store.sync({
+                            callback: function(batch, options) {
+                                console.log('Store save returned: ',batch, options );
+                            } 
+                        });
                     }
                 }
             },
 
-            _saveWSJF: function(record) {
-                var num = 0;
-                var oldVal = record.get('WSJFScore').toFixed(2);
-
+            _calcWSJF: function(record) {
+                var num = 0.0;
                 if (app.getSetting('usePrelim')) {
                     if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
                         num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('PreliminaryEstimate').Value;
@@ -539,6 +556,12 @@ Ext.define('CustomApp', {
                 } else {
                     num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
                 }
+                return num;
+            },
+
+            _saveWSJF: function(record) {
+                var num = this._calcWSJF(record);
+                var oldVal = record.get('WSJFScore').toFixed(2);
 
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
                 num = num.toFixed(2);
