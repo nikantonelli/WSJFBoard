@@ -1,3 +1,43 @@
+Ext.define('wsjfProgressBar', {
+    alias: 'widget.wsjfProgressBar',
+    extend: Ext.Component,
+    constructor: function(config) {
+        this.callParent(arguments);
+        this.renderTpl = Ext.create('Rally.ui.renderer.template.progressbar.ProgressBarTemplate', {
+            percentDoneName: 'PercentDone',
+            height: '15px',
+            width: '100%%',
+            isClickable: false,
+            calculateColorFn: function(values) {
+                return Rally.util.Colors.cyan;
+            }
+        });
+        this.on( {
+            afterrender: this._onAfterRender,
+            scope: this
+        });
+    },
+
+    _onAfterRender: function() {
+        this.update();
+    },
+    
+    value: 0,
+
+    set: function(value) {
+        this.value = value;
+        this.update();
+    },
+
+    update: function(value) {
+        if ( undefined !== value) {
+            this.value = value;
+        }
+        var html = this.renderTpl.apply({PercentDone: this.value});
+        this.callParent([html]);
+    }
+});
+
 Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
     extend: 'Ext.AbstractPlugin',
     alias: 'plugin.rallydependenciesplugin',
@@ -115,7 +155,6 @@ Ext.define('CustomApp', {
 
     config: {
         defaultSettings: {
-            useWSJFOverLoad: true,
             usePrelim: false,
             showFilter: false,
             useWSJFReadOnly: true,
@@ -166,11 +205,6 @@ Ext.define('CustomApp', {
             fieldLabel: 'Use Preliminary Estimate',
             labelWidth: 200,
             name: 'usePrelim'
-        }, {
-            xtype: 'rallycheckboxfield',
-            fieldLabel: 'Overwrite WSJF on load',
-            labelWidth: 200,
-            name: 'useWSJFOverLoad'
         }, {
             xtype: 'rallycheckboxfield',
             fieldLabel: 'Make WSJF field read-only',
@@ -290,9 +324,9 @@ Ext.define('CustomApp', {
             xtype: 'container',
             id: 'headerBox',
             layout: 'column',
-            border: 5,
+            border: 3,
             style: {
-                borderColor: '#396295',
+                borderColor: Rally.util.Colors.cyan,
                 borderStyle: 'solid'
             }
         });
@@ -349,6 +383,11 @@ Ext.define('CustomApp', {
         //Add fields to show current project weighting
         var vbox = Ext.getCmp('headerBox').add({
             xtype: 'container',
+            listeners: {
+                afterrender: function() {
+                    //debugger;
+                }
+            },
             layout: 'hbox',
             items: [
                 {
@@ -366,15 +405,15 @@ Ext.define('CustomApp', {
                                     forId: 'costweighting',
                                 },
                                 {
-                                    xtype: 'progressbar',
+                                    xtype: 'wsjfProgressBar',
+                                    width: '100px',
+                                    margin: '10 10 0 10',
                                     id: 'costweighting',
-                                    width: '120px',
-                                    value: project.get('c_CostImpactWeighting')/100,
-                                    margin: '10 0 10 0',
-                                    text: project.get('c_CostImpactWeighting')
-                                }
+                                    value: project.get('c_CostImpactWeighting')/100
+                                },
                             ]
-                        },{
+                        },
+                        {
                             xtype: 'container',
                             layout: 'hbox',
                             items: [
@@ -384,14 +423,14 @@ Ext.define('CustomApp', {
                                     margin: '0 0 10 10',
                                     text: 'Customer Weighting',
                                     forId: 'custweighting',
-                                },{
-                                    xtype: 'progressbar',
-                                    id: 'custweighting',
-                                    width: '120px',
+                                },
+                                {
+                                    xtype: 'wsjfProgressBar',
+                                    width: '100px',
+                                    margin: '0 10 10 10',
                                     value: project.get('c_CustomerImpactWeighting')/100,
-                                    margin: '0 0 10 0',
-                                    text: project.get('c_CustomerImpactWeighting'),
-                                }
+                                    id: 'custweighting',
+                                },
                             ]
                         }
                     ]
@@ -406,18 +445,17 @@ Ext.define('CustomApp', {
                                 {
                                     xtype: 'label',
                                     width: '120px',
-                                    margin: '10 0 10 10',
+                                    margin: '10 0 0 10',
                                     text: 'Revenue Weighting',
                                     forId: 'revnweighting',
                                 },
                                 {
-                                    xtype: 'progressbar',
+                                    xtype: 'wsjfProgressBar',
+                                    width: '100px',
+                                    margin: '10 10 0 10',
                                     id: 'revnweighting',
-                                    width: '120px',
-                                    value: project.get('c_RevenueImpactWeighting') /100,
-                                    margin: '10 0 10 0',
-                                    text: project.get('c_RevenueImpactWeighting')
-                                }
+                                    value: project.get('c_RevenueImpactWeighting')/100,
+                                },
                             ]
                         },{
                             xtype: 'container',
@@ -426,151 +464,189 @@ Ext.define('CustomApp', {
                                 {
                                     xtype: 'label',
                                     width: '120px',
-                                    margin: '0 0 10 10',
+                                    margin: '10 0 10 10',
                                     text: 'Risk Weighting',
                                     forId: 'riskweighting',
-                                },{
-                                    xtype: 'progressbar',
+                                },
+                                {
+                                    xtype: 'wsjfProgressBar',
+                                    width: '100px',
+                                    margin: '10 10 0 10',
                                     id: 'riskweighting',
-                                    width: '120px',
                                     value: project.get('c_RiskImpactWeighting')/100,
-                                    margin: '0 0 10 0',
-                                    text: project.get('c_RiskImpactWeighting')
-                                }
+                                },
                             ]
                         }
                     ]
                 }
             ]
         });
+
         //If we are admin, allow for setting of the project variables
         if (app.weAreAdmin ) {
             //Ext.getCmp('headerBox').add({
             var weightingBox = Ext.create( 'Ext.Container', {
                 id: 'weightingBox',
-                hidden: true,
-                hideMode: 'offsets',
+                layout: 'hbox',
                 items: [ 
-                    {
-                        xtype: 'rallybutton',
-                        margin: 10,
-                        text: 'Change Weightings',
-                        style: {
-                            backgroundColor: '#396295',
-                        },
-                        handler: function() {
-                            var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
-                                id: 'projectChooser',
-                                items: [
-                                    {
-                                        xtype: 'rallyprojectpicker',
-                                        id: 'projectChooserId',
-                                        listeners: {
-                                            expand: function(args) {
-                                                this.setValueForProjectRef(project.get('_ref'));
-                                            }
-                                        }
-                                    },
-                                    {
-                                        xtype: 'rallycheckboxfield',
-                                        fieldLabel: 'Change all children projects',
-                                        id: 'doChildrenId',
-                                        disabled: true
-                                    },
-                                    { 
-                                        xtype: 'container', 
-                                        id: 'sliderId',
-                                        layout: 'hbox',
+                    {   
+                        xtype: 'container',
+                        id: 'innerbox',
+                        layout: 'vbox',
+                        items: [
+                            {
+                                xtype: 'rallybutton',
+                                margin: '10 0 0 10',
+                                width: 160,
+                                text: 'Change Weightings',
+                                style: {
+                                    backgroundColor: Rally.util.Colors.cyan,
+                                },
+                                handler: function() {
+                                    var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
+                                        id: 'projectChooser',
                                         items: [
                                             {
-                                                xtype: 'rallyslider',
-                                                id: 'costSlider',
-                                                value: (project.get('c_CostImpactWeighting') || 100),
-                                                minValue: 0,
-                                                maxValue:100,
-                                                vertical: true,
-                                                height: 300,
-                                                labelAlign: 'top',
-                                                fieldLabel: 'Cost',
-                                                margin: '0 0 0 10'
-                                            },{
-                                                xtype: 'rallyslider',
-                                                id: 'custSlider',
-                                                minValue: 0,
-                                                maxValue:100,
-                                                vertical: true,
-                                                height: 300,
-                                                value: (project.get('c_CustomerImpactWeighting') || 100),
-                                                labelAlign: 'top',
-                                                fieldLabel: 'Customer'
-                                            },{
-                                                xtype: 'rallyslider',
-                                                vertical: true,
-                                                minValue: 0,
-                                                maxValue:100,
-                                                height: 300,
-                                                id: 'revnSlider',
-                                                value: (project.get('c_RevenueImpactWeighting') || 100),
-                                                labelAlign: 'top',
-                                                fieldLabel: 'Revenue'
-                                            },{
-                                                xtype: 'rallyslider',
-                                                vertical: true,
-                                                height: 300,
-                                                minValue: 0,
-                                                maxValue:100,
-                                                id: 'riskSlider',
-                                                value: (project.get('c_RiskImpactWeighting') || 100),
-                                                labelAlign: 'top',
-                                                fieldLabel: 'Risk'
+                                                xtype: 'rallyprojectpicker',
+                                                id: 'projectChooserId',
+                                                listeners: {
+                                                    expand: function(args) {
+                                                        this.setValueForProjectRef(project.get('_ref'));
+                                                    }
+                                                }
                                             },
-                                        ]
-                                    }
-                                ],
-                                autoShow: true,
-                                closable: true,
-                                // draggable: true,
-                                width: 400,
-                                title: 'Choose Projects to Change',
-                                listeners: {
-                                    afterrender: function() {
-                                        Ext.getCmp('projectChooserId').on('expand', this._enableOK);
-                                    }
-                                },
-                                buttons: [
-                                    {
-                                        text: 'OK',
-                                        disabled: true,
-                                        id: 'OKbutton',
-                                        handler: function(arg1, arg2, arg3) {
-                                            //Get all the projectChoosers selection
-                                            app._changeProjectWeightings(
-                                                Ext.getCmp('projectChooserId'), 
-                                                Ext.getCmp('doChildrenId'), 
-                                                Ext.getCmp('sliderId') 
-                                            );
-                                            var records = Ext.getCmp('piGrid').store.getRecords();
-                                            _.each(records, app._saveWSJF, app);
-                                            Ext.getCmp('piGrid').getView().refresh();
-                                            doChooser.destroy();
+                                            {
+                                                xtype: 'rallycheckboxfield',
+                                                fieldLabel: 'Change all children projects',
+                                                id: 'doChildrenId',
+                                                disabled: true
+                                            },
+                                            { 
+                                                xtype: 'container', 
+                                                id: 'sliderId',
+                                                layout: 'hbox',
+                                                items: [
+                                                    {
+                                                        xtype: 'rallyslider',
+                                                        id: 'costSlider',
+                                                        minValue: 0,
+                                                        maxValue:100,
+                                                        vertical: true,
+                                                        height: 300,
+                                                        labelAlign: 'top',
+                                                        value: ((Ext.getCmp('costweighting').value || 1)*100),
+                                                        fieldLabel: 'Cost',
+                                                        margin: '0 0 0 10'
+                                                    },{
+                                                        xtype: 'rallyslider',
+                                                        id: 'custSlider',
+                                                        minValue: 0,
+                                                        maxValue:100,
+                                                        vertical: true,
+                                                        height: 300,
+                                                        value: ((Ext.getCmp('custweighting').value || 1)*100),
+                                                        labelAlign: 'top',
+                                                        fieldLabel: 'Customer'
+                                                    },{
+                                                        xtype: 'rallyslider',
+                                                        vertical: true,
+                                                        minValue: 0,
+                                                        maxValue:100,
+                                                        height: 300,
+                                                        id: 'revnSlider',
+                                                        value: ((Ext.getCmp('revnweighting').value || 1)*100),
+                                                        labelAlign: 'top',
+                                                        fieldLabel: 'Revenue'
+                                                    },{
+                                                        xtype: 'rallyslider',
+                                                        vertical: true,
+                                                        height: 300,
+                                                        minValue: 0,
+                                                        maxValue:100,
+                                                        id: 'riskSlider',
+                                                        value: ((Ext.getCmp('riskweighting').value || 1)*100),
+                                                        labelAlign: 'top',
+                                                        fieldLabel: 'Risk'
+                                                    },
+                                                ]
+                                            }
+                                        ],
+                                        autoShow: true,
+                                        closable: true,
+                                        // draggable: true,
+                                        width: 400,
+                                        title: 'Choose Projects to Change',
+                                        listeners: {
+                                            afterrender: function() {
+                                                Ext.getCmp('projectChooserId').on('expand', this._enableOK);
+                                            }
                                         },
-                                    },
-                                    {
-                                        text: 'Cancel',
-                                        handler: function() {
-                                            doChooser.destroy();
+                                        buttons: [
+                                            {
+                                                text: 'OK',
+                                                disabled: true,
+                                                id: 'OKbutton',
+                                                handler: function(arg1, arg2, arg3) {
+                                                    //Get all the projectChoosers selection
+                                                    app._changeProjectWeightings(
+                                                        Ext.getCmp('projectChooserId'), 
+                                                        Ext.getCmp('doChildrenId'), 
+                                                        Ext.getCmp('sliderId') 
+                                                    );
+                                                    var store = Ext.getCmp('piGrid').store;
+                                                    var me = Ext.getCmp('wsjfApp');
+                                                    _.each(store.getRecords(), function(record) {
+                                                        var num = me._calcWSJF(record).toFixed(2);
+                                                        if ( num !== record.get('c_weightedWSJF').toFixed(2)) {
+                                                            record.set('c_weightedWSJF', parseFloat(num));
+                                                        }
+                                                    });
+                                                    //Ext.getCmp('piGrid').getView().refresh();
+                                                    doChooser.destroy();
+                                                },
+                                            },
+                                            {
+                                                text: 'Cancel',
+                                                handler: function() {
+                                                    doChooser.destroy();
+                                                }
+                                            }
+                                        ],
+                                        scope: app,
+                                        _enableOK: function() {
+                                            Ext.getCmp('OKbutton').enable();
                                         }
-                                    }
-                                ],
-                                scope: app,
-                                _enableOK: function() {
-                                    Ext.getCmp('OKbutton').enable();
+                                    });
                                 }
-                            });
-                        }
+                            },
+                            {
+                                xtype: 'rallybutton',
+                                id: 'saveWeightings',
+                                margin: '9 0 10 10',   //Incompatability of font sizes!
+                                width: 160,
+                                text: 'Save Weighted WSJF',
+                                style: {
+                                    backgroundColor: Rally.util.Colors.cyan,
+                                },
+                                handler: this._saveStore,
+                                scope: this
+                            }
+                        ]
                     }
                 ]
             });
+            weightingBox.add( {
+                xtype: 'rallybutton',
+                id: 'commitWWSJF',
+                margin: 10,
+                width: 160,
+                text: 'Commit Weighted WSJF',
+                style: {
+                    backgroundColor: Rally.util.Colors.cyan,
+                },
+                handler: this._commitWWSJF,
+                scope: this
+        });
             //We should prevent re-ordering of rank if we have sub-sampled by release or a filter
             //It makes for a confusing result otherwise
             var timeboxscope = this.getContext().getTimeboxScope();
@@ -579,11 +655,12 @@ Ext.define('CustomApp', {
                     xtype: 'rallybutton',
                     id: 'MakeItSo',
                     margin: 10,
-                    text: 'Commit Weighted WSJF',
+                    width: 160,
+                    text: 'Rank by WSJF',
                     style: {
-                        backgroundColor: '#396295',
+                        backgroundColor: Rally.util.Colors.cyan,
                     },
-                    handler: this._storeRecords,
+                    handler: this.commitRecords,
                     scope: this
                 });
 
@@ -608,26 +685,33 @@ Ext.define('CustomApp', {
     _changeProjectWeightings: function(projectChooser, doChildren, sliders) {
         var selected = projectChooser.getSelectedRecord();
         var risk = sliders.getComponent('riskSlider').getSubmitValue();
-        Ext.getCmp('riskweighting').updateProgress(risk/100);
-        Ext.getCmp('riskweighting').updateText(risk);
-        var cost = sliders.getComponent('costSlider').getSubmitValue();
-        Ext.getCmp('costweighting').updateProgress(cost/100);
-        Ext.getCmp('costweighting').updateText(cost);
-        var cust = sliders.getComponent('custSlider').getSubmitValue();
-        Ext.getCmp('custweighting').updateProgress(cust/100);
-        Ext.getCmp('custweighting').updateText(cust);
-        var revn = sliders.getComponent('revnSlider').getSubmitValue();
-        Ext.getCmp('revnweighting').updateProgress(revn/100);
-        Ext.getCmp('revnweighting').updateText(revn);
         selected.set('c_RiskImpactWeighting', risk);
-        selected.set('c_CustomerImpactWeighting', cust);
-        selected.set('c_CostImpactWeighting', cost);
-        selected.set('c_RevenueImpactWeighting', revn);
+        var cust = sliders.getComponent('custSlider').getSubmitValue();
+        selected.set('c_CustomerImpactWeighting', cust); 
+        var cost = sliders.getComponent('costSlider').getSubmitValue();
+        selected.set('c_CostImpactWeighting', cost); 
+        var revn = sliders.getComponent('revnSlider').getSubmitValue();
+        selected.set('c_RevenueImpactWeighting', revn); 
         selected.save({
             callback: function() {
-                console.log("saved weightings: ", cost, cust, revn, risk);              
+                console.log ( 'Project Weightings: ', risk, cost, cust, revn);
+                Ext.getCmp('riskweighting').update(risk/100);           
+                Ext.getCmp('costweighting').update(cost/100);           
+                Ext.getCmp('custweighting').update(cust/100);           
+                Ext.getCmp('revnweighting').update(revn/100);           
             }
         });
+
+
+        // Ext.getCmp('riskweighting').updateProgress(risk/100);
+        // Ext.getCmp('riskweighting').updateText(risk);
+        // Ext.getCmp('costweighting').updateProgress(cost/100);
+        // Ext.getCmp('costweighting').updateText(cost);
+
+        // Ext.getCmp('custweighting').updateProgress(cust/100);
+        // Ext.getCmp('custweighting').updateText(cust);
+        // Ext.getCmp('revnweighting').updateProgress(revn/100);
+        // Ext.getCmp('revnweighting').updateText(revn);
         
     },
 
@@ -846,6 +930,8 @@ Ext.define('CustomApp', {
             xtype: 'templatecolumn',
             tpl: tpl,
             align: 'center',
+            editRenderer: function() { //debugger;
+            },
             editor: null
         };
 
@@ -908,7 +994,7 @@ Ext.define('CustomApp', {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'State', 'Name', 'Release', 'Project', 'JobSize', 'c_controlWSJF', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
+                fetch: ['FormattedID', 'PreliminaryEstimate', 'PreliminaryEstimateValue', 'State', 'Name', 'Release', 'Project', 'JobSize', 'c_controlWSJF', 'c_RevenueImpactRating','c_CostImpactRating', 'c_RiskImpactRating', 'c_CustomerImpactRating', 'WSJFScore', 'State'],
                 filters: app._getFilters(app)
             },
 
@@ -917,16 +1003,7 @@ Ext.define('CustomApp', {
                     app._saveWSJF(record);
                 },
                 load: function(store) {
-                    var records = store.getRecords();
-                    if (app.getSetting('useWSJFOverLoad')) {
-                        _.each(records, app._saveWSJF, app);
-                    }
-                    grid.getView().refresh();
-                    //Check to see if we are in a place where the weightedWSJF is visible
-                    //If they are not, then turn off the WeightingBox
-                    if (app.weAreAdmin && app.getSetting('showChange')) {
-                        Ext.getCmp('weightingBox').show();
-                    } 
+                    app._store = store;
                 },
                 scope: app
             },
@@ -937,32 +1014,63 @@ Ext.define('CustomApp', {
         this.add(grid);
 
     },
+
+    _saveStore: function() {
+        var store = Ext.getCmp('wsjfApp')._store;
+        if ( store.getModifiedRecords().length > 0) {
+            Ext.getCmp('weightingBox').setLoading('Saving values...');
+            Ext.getCmp('wsjfApp')._store.sync({
+                callback: function(batch, options) {
+                    Ext.getCmp('weightingBox').setLoading(false);                
+                    console.log('Store save returned: ',batch, options );
+                } 
+            });
+        }
+    },
+
     _saveWSJF: function(record) {
         if (!(record.raw.hasOwnProperty('c_weightedWSJF'))) { return; }  //The field might not be visible
-        var num  = this._calcWeightedWSJF(record);
-        var oldVal = (record.get('c_weightedWSJF') || 0).toFixed(2);
+        var num  = this._calcWSJF(record).toFixed(2);
+        var oldVal = (record.get('WSJFScore') || 0).toFixed(2);
         //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
 
         if (num !== oldVal) {
-            record.set('c_weightedWSJF', num.toFixed(2));
+            record.set('WSJFScore', parseFloat(num));
             record.save({
                 callback: function() {
-                    console.log('Updated weightedWSJF for ',record.get('FormattedID'), ' to: ', record.get('c_weightedWSJF'));
+                    console.log('Updated WSJF for ',record.get('FormattedID'), ' from: ', oldval, ' to: ', num);
                 }
             });
         }
     },
 
-    _calcWeightedWSJF: function(record) {
+    _commitWWSJF: function() {
+        var app = Ext.getCmp('wsjfApp');
+        var records = app._store.getRecords();
+        _.each(records, function(record) {
+            if ( record.get('WSJFScore') !== record.get('c_weightedWSJF')){
+                record.set('WSJFScore', record.get('c_weightedWSJF'));
+            }
+        });
+
+        app._saveStore();
+    },
+
+    _calcWSJF: function(record) {
         var num = 0.0;
+        var peVal = 0;
         num = ( Math.abs(parseInt(record.get('c_RevenueImpactRating') || 0) * Ext.getCmp('revnweighting').value) + 
         (Math.abs(parseFloat(record.get('c_CostImpactRating') || 0)) * Ext.getCmp('costweighting').value) + 
         (Math.abs(parseFloat(record.get('c_CustomerImpactRating') || 0)) * Ext.getCmp('custweighting').value) + 
         (Math.abs(parseFloat(record.get('c_RiskImpactRating') || 0)) * Ext.getCmp('riskweighting').value));
+        
         if (Ext.getCmp('wsjfApp').getSetting('usePrelim')) {
-            // If no Prelim value, we will assume '1', so no calc needed.
-            if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
-                num = num / record.get('PreliminaryEstimate').Value;
+            // If no Prelim value, don't give a random number;
+            if ((peVal = record.get('PreliminaryEstimateValue')) > 0) {
+                num = num / peVal;
+            }
+            else {
+                num = 0;
             }
         } else {
             num = num / record.get('JobSize');
@@ -974,12 +1082,10 @@ Ext.define('CustomApp', {
     _rankingRecord: null,
     _store: null,
 
-    _storeRecords: function() {
-        this._store = Ext.getCmp('piGrid').store;
+    commitRecords: function() {
         var records = this._store.getRecords();
         _.each(records, function (record) {
-            record.set ('WSJFScore', record.get('c_weightedWSJF').toFixed(2));
-            record.save();
+            record.set ('WSJFScore', parseFloat(record.get('c_weightedWSJF').toFixed(2)));
         });
         this._store.sync();
 
@@ -1100,14 +1206,13 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                         var negative = 1;
                         if ( Ext.getCmp('negativeCheck').value) { negative = -1; }
                         record.set(chooserField, Ext.getCmp('localBox').value * negative);
-                        var num = Ext.getCmp('wsjfApp')._calcWeightedWSJF(record);
+                        var num = Ext.getCmp('wsjfApp')._calcWSJF(record);
 
                         //if the field is 'decimal' you can only have two decimal places....
-                        record.set('c_weightedWSJF', num);
+                        record.set('c_weightedWSJF', parseFloat(num.toFixed(2)));
                         record.save({
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
-                                    console.log("save chooser");
                                     Ext.getCmp('piGrid').getView().refresh();
                                 }
                             }
