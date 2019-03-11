@@ -7,7 +7,48 @@
 
     <script type="text/javascript">
         Rally.onReady(function () {
-                Ext.define('wsjfProgressBar', {
+                Ext.define('myPicker', {
+    alias: 'widget.myPicker',   //For xtype
+    extend: 'Rally.ui.picker.project.ProjectPicker',
+
+    bubbleEvents:[
+        'updateBacklogNode'
+    ],
+
+    listeners: {
+        afterrender: function() {
+            this.expand();
+        },
+        change: function() {
+            //Save the selected record
+            this.fireEvent('updateBacklogNode', this.getSelectedRecord().data);
+        }
+    },
+    expand: function () {
+        if (this.isLoaded) {
+            this.removePlaceholderText();
+            this.callParent(arguments);
+            if (!this.firstTime && this.savedRecord) {
+                this.setValue(this.savedRecord._ref);
+                this.collapse();
+                this.firstTime = true;
+                this.fireEvent('select');
+            }
+        } else {
+            this.setPlaceholderText(this.getLoadingText());
+            this.tree.loadTopLevel().then({
+                success: function () {
+                    this.isLoaded = true;
+                    this.expand();
+                },
+                scope: this
+            });
+        }
+    },
+    
+});
+
+Ext.define('wsjfProgressBar', {
     alias: 'widget.wsjfProgressBar',
     extend: Ext.Component,
     constructor: function(config) {
@@ -512,17 +553,16 @@ Ext.define('CustomApp', {
                                     backgroundColor: Rally.util.Colors.cyan,
                                 },
                                 handler: function() {
+                                    var workspace = app.getContext().getWorkspace();
                                     var doChooser = Ext.create('Rally.ui.dialog.Dialog', {
                                         id: 'projectChooser',
                                         items: [
                                             {
-                                                xtype: 'rallyprojectpicker',
+                                                xtype: 'myPicker',
                                                 id: 'projectChooserId',
-                                                listeners: {
-                                                    expand: function(args) {
-                                                        this.setValueForProjectRef(project.get('_ref'));
-                                                    }
-                                                }
+                                                fieldLabel: 'Backlog Node ',
+                                                workspace: workspace._ref,
+                                                savedRecord: project.data,
                                             },
                                             {
                                                 xtype: 'rallycheckboxfield',
