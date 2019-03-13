@@ -365,10 +365,10 @@ Ext.define('CustomApp', {
             xtype: 'container',
             id: 'headerBox',
             layout: 'column',
-            border: 3,
+//            border: 3,
             style: {
-                borderColor: Rally.util.Colors.cyan,
-                borderStyle: 'solid'
+//                borderColor: '#006488',
+                borderStyle: 'none'
             }
         });
 
@@ -541,7 +541,8 @@ Ext.define('CustomApp', {
                                 width: 160,
                                 text: 'Change Weightings',
                                 style: {
-                                    backgroundColor: Rally.util.Colors.cyan,
+                                    backgroundColor: '#006488',
+                                    color: 'black'
                                 },
                                 handler: function() {
                                     var workspace = app.getContext().getWorkspace();
@@ -666,7 +667,7 @@ Ext.define('CustomApp', {
                                 width: 160,
                                 text: 'Save Weighted WSJF',
                                 style: {
-                                    backgroundColor: Rally.util.Colors.cyan,
+                                    backgroundColor: '#006488',
                                 },
                                 handler: this._saveStore,
                                 scope: this
@@ -682,7 +683,7 @@ Ext.define('CustomApp', {
                 width: 160,
                 text: 'Commit Weighted WSJF',
                 style: {
-                    backgroundColor: Rally.util.Colors.cyan,
+                    backgroundColor: '#006488',
                 },
                 handler: this._commitWWSJF,
                 scope: this
@@ -698,7 +699,7 @@ Ext.define('CustomApp', {
                     width: 160,
                     text: 'Rank by WSJF',
                     style: {
-                        backgroundColor: Rally.util.Colors.cyan,
+                        backgroundColor: '#006488',
                     },
                     handler: this.commitRecords,
                     scope: this
@@ -1055,15 +1056,31 @@ Ext.define('CustomApp', {
 
     },
 
+    _saveRecord: function(record) {
+        var aPromise = Ext.create('Deft.Deferred');
+        record.save( {
+            success: function(result) {
+                aPromise.resolve(result);
+            },
+            failure: function(error) {
+                aPromise.reject(error);
+            }
+        });
+        return aPromise.promise;
+    },
+
     _saveStore: function() {
         var store = Ext.getCmp('wsjfApp')._store;
         if ( store.getModifiedRecords().length > 0) {
             Ext.getCmp('weightingBox').setLoading('Saving values...');
-            Ext.getCmp('wsjfApp')._store.sync({
-                callback: function(batch, options) {
-                    Ext.getCmp('weightingBox').setLoading(false);                
-                    console.log('Store save returned: ',batch, options );
-                } 
+            var promises = [];
+            var me = Ext.getCmp('wsjfApp');
+            _.each(store.getRecords(), function(record) {
+                promises.push (me._saveRecord(record));
+            });
+            Deft.Promise.all(promises).then({
+                success: function() { Ext.getCmp('weightingBox').setLoading(false);       },
+                failure: function() { debugger;}
             });
         }
     },
