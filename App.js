@@ -532,7 +532,7 @@ Ext.define('CustomApp', {
                 },
                 load: function(store) {
                     if (app.getSetting('useWSJFOverLoad')) {
-
+                        Ext.getCmp('headerBox').setLoading('Updating WSJF...'); 
                         var records = store.getRecords();
                         var me = this;
                         _.each(records, function(record) {
@@ -541,12 +541,36 @@ Ext.define('CustomApp', {
                                 record.set('WSJFScore',num);
                             }
                         });
-                        store.sync({
-                            callback: function(batch, options) {
-                                console.log('Store save returned: ',batch, options );
-                            } 
-                        });
+                        this._storeSync(store);
                     }
+                }
+            },
+
+            _saveRecord: function(record) {
+                var aPromise = Ext.create('Deft.Deferred');
+                record.save( {
+                    success: function(result) {
+                        aPromise.resolve(result);
+                    },
+                    failure: function(error) {
+                        aPromise.reject(error);
+                    }
+                });
+                return aPromise.promise;
+            },
+
+            _storeSync: function (store){
+                var records = store.getModifiedRecords();
+                if (records.length > 0) {
+                    var promises = [];
+                    var me = this;
+                    _.each(store.getRecords(), function(record) {
+                        promises.push (me._saveRecord(record));
+                    });
+                Deft.Promise.all(promises).then({
+                    success: function() { Ext.getCmp('headerBox').setLoading(false);       },
+                    failure: function() { debugger;}
+                });
                 }
             },
 
