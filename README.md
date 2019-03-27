@@ -36,7 +36,7 @@ Inline editing is disabled apart from setting the Preliminary Estimate Sizing (i
 
 Normal editing menu:
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/normal%20edit%20menu.jpg)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/normal%20edit%20menu.jpg)
 
 Bulk editing to standard values:
 
@@ -50,14 +50,14 @@ The standard values can be changed in the data blocks at the end of the source c
 
 Commit of viewed WSJF table as rank in the database:
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/set%20global%20rank.jpg)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/set%20global%20rank.jpg)
 
 
 ## Helper messages
 
 Hover over the column titles to get pop-ups with 'reminder' info on the column. These too, can be changed in the data blocks to your needs.
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/hoverhelp.png)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/hoverhelp.png)
 
 ## User settings
 
@@ -71,7 +71,8 @@ By going to "Edit App Settings" from the gear in the top right hand corner:
 
 If you change from JobSize to PrelimEst and set the 'recalculate on load' checkbox, the app will rework the numbers accordingly.
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/options.png)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/options.png)
+
 
 ## Caveat!
 
