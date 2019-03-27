@@ -188,7 +188,7 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
 });
 
 
-Ext.define('CustomApp', {
+Ext.define('Nik.Apps.WeightedWSJF', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
     settingsScope: 'project',
@@ -555,12 +555,6 @@ Ext.define('CustomApp', {
                                                 fieldLabel: 'Backlog Node ',
                                                 workspace: workspace._ref,
                                                 savedRecord: project.data,
-                                            },
-                                            {
-                                                xtype: 'rallycheckboxfield',
-                                                fieldLabel: 'Change all children projects',
-                                                id: 'doChildrenId',
-                                                disabled: true
                                             },
                                             { 
                                                 xtype: 'container', 

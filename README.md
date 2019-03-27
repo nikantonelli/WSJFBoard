@@ -23,7 +23,7 @@ The weightings (or 'Impact Rating') for the target node can be modified via a sl
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/FiveVariable/images/sliders.png)
 
-The slider panel loads with the current values, but you then have to select a project node. This is handy if you want to transfer numbers from the current node to another one
+The slider panel loads with the current values and project, but you then can select a different project node. This is handy if you want to transfer numbers from the current node to another one
 
 Portfolio Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
 
