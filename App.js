@@ -567,10 +567,12 @@ Ext.define('CustomApp', {
                     _.each(store.getRecords(), function(record) {
                         promises.push (me._saveRecord(record));
                     });
-                Deft.Promise.all(promises).then({
-                    success: function() { Ext.getCmp('headerBox').setLoading(false);       },
-                    failure: function() { debugger;}
-                });
+                    Deft.Promise.all(promises).then({
+                        success: function() { console.log("Completed " + promises.length + " saves." );},
+                        failure: function() { console.log("Failed to save all records." );}
+                    }).always( function() {
+                        Ext.getCmp('headerBox').setLoading(false);       
+                    });
                 }
             },
 
