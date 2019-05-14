@@ -132,7 +132,7 @@ Ext.define('CustomApp', {
     config: {
         defaultSettings: {
             usePrelim: true,
-            useWSJFOverLoad: true,
+            useWSJFOverLoad: false,
             useWSJFReadOnly: true,
             useProjectField: false,
             useStateField: false,
