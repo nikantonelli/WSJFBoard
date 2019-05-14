@@ -351,8 +351,8 @@ Ext.define('CustomApp', {
         //Now get the settings query box and apply those settings
         var queryString = app.getSetting('query');
         if (queryString) {
-            Ext.getCmp('MakeItSo').hide(); //Don't allow committing if subselected
-            Ext.getCmp('globalCheck').hide();
+            if ( Ext.getCmp('MakeItSo')) Ext.getCmp('MakeItSo').hide(); //Don't allow committing if subselected
+            if ( Ext.getCmp('globalCheck')) Ext.getCmp('globalCheck').hide();
             var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
             filterObj.itemId = filterObj.toString();
             filters.push(filterObj);
