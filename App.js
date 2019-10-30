@@ -11,11 +11,6 @@ Ext.define('Rally.ui.grid.plugin.DependenciesPopoverPlugin', {
     alias: 'plugin.rallydependenciesplugin',
     require: ['Rally.ui.popover.DependenciesPopover'],
 
-//    constructor: function(config) {
-//        this.initConfig(config);
-//        return this.callParent(arguments);
-//    },
-//
     init: function(cmp) {
         this.callParent(arguments);
         this._delayedTask = Ext.create('Ext.util.DelayedTask', this._showPopover, this);
@@ -90,13 +85,10 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
             xtype: 'wsjfBulkSetTime',
             id: 'wsjfBulkSetTime'
         });
-
-        if (Ext.getCmp('wsjfApp').getSetting('usePrelim') === false) {
-            items.push({
-                xtype: 'wsjfBulkSetSize',
-                id: 'wsjfBulkSetSize'
-            });
-        }
+        items.push({
+            xtype: 'wsjfBulkSetSize',
+            id: 'wsjfBulkSetSize'
+        });
 
         _.each(items, function(item) {
             Ext.apply(item, {
@@ -126,18 +118,24 @@ Ext.define('CustomApp', {
 
     onTimeboxScopeChange: function(newTimeboxScope) {
         this.callParent(arguments);
-        this._startApp(this);
+        gApp._startApp();
     },
 
     config: {
         defaultSettings: {
-            usePrelim: true,
             useWSJFOverLoad: false,
             useWSJFReadOnly: true,
-            useProjectField: false,
-            useStateField: false,
-            showFilter: false
-        }
+            useProjectField: true,
+            useStateField: true,
+            showFilter: false,
+        },
+        wsjfField: { field: 'WSJFScore', name: 'WSJF Score'},
+        wsjfCalcFields:[   
+            { field: 'RROEValue',         name: 'RR/OE',            menu: 'wsjfBulkSetRisk',  aboveLine: true },
+            { field: 'UserBusinessValue', name: 'End User Value',   menu: 'wsjfBulkSetValue', aboveLine: true },
+            { field: 'TimeCriticality',   name: 'Time Criticality', menu: 'wsjfBulkSetTime',  aboveLine: true },
+            { field: 'Size',              name: 'Size',             menu: 'wsjfBulkSetSize',  aboveLine: false }
+        ]
     },
 
     getSettingsFields: function() {
@@ -168,11 +166,6 @@ Ext.define('CustomApp', {
             }
         }, {
             xtype: 'rallycheckboxfield',
-            fieldLabel: 'Use Preliminary Estimate',
-            labelWidth: 200,
-            name: 'usePrelim'
-        }, {
-            xtype: 'rallycheckboxfield',
             fieldLabel: 'Overwrite WSJF on load',
             labelWidth: 200,
             name: 'useWSJFOverLoad'
@@ -198,7 +191,7 @@ Ext.define('CustomApp', {
             name: 'useProjectField'
         },{
             xtype: 'rallycheckboxfield',
-            fieldLabel: 'Show Advanced filter on the application. This will remove the ability to commit the rank',
+            fieldLabel: 'Show Advanced filter',
             labelWidth: 200,
             name: 'showFilter'
         }];
@@ -208,7 +201,7 @@ Ext.define('CustomApp', {
     launch: function() {
 
         var context = this.getContext();
-        var app = this;
+        gApp = this;
 
 
         this.add({
@@ -228,24 +221,19 @@ Ext.define('CustomApp', {
         });
 
         Ext.getCmp('headerBox').add({
-            xtype: 'rallyportfolioitemtypecombobox',
+            xtype: 'rallybutton',
             labelWidth: 150,
-            fieldLabel: 'Choose portfolio type:',
-            id: 'itemType',
+            text: 'Fetch Items',
+            id: 'goDoIt',
             margin: 10,
-            listeners: {
-                ready: function() {
-                    app._startApp(app);
-                },
-                select: function() {
-                    app._startApp(app);
-                }
+            handler: function() {
+                gApp._startApp();
             },
             scope: this,
             align: 'left'
         });
 
-        if(app.getSetting('showFilter')){
+        if(gApp.getSetting('showFilter')){
             Ext.getCmp('headerBox').add({
                 xtype: 'rallyinlinefiltercontrol',
                 name: 'inlineFilter',
@@ -257,11 +245,11 @@ Ext.define('CustomApp', {
                     stateful: true,
                     stateId: this.getContext().getScopedStateId('inline-filter'),
                     context: this.getContext(),
-                    modelNames: ['PortfolioItem'],
+                    modelNames: ['HierarchicalRequirement'],
                     filterChildren: false,
                     inlineFilterPanelConfig: {
                         quickFilterPanelConfig: {
-                            defaultFields: ['ArtifactSearch', 'Owner']
+                            defaultFields: ['ArtifactSearch', 'Owner', 'ScheduleState']
                         }
                     },
                     listeners: {
@@ -273,40 +261,15 @@ Ext.define('CustomApp', {
             });            
         }
 
-
-        //We should prevent re-ordering of rank if we have sub-sampled by release
-        //It makes for a confusing result otherwise
-        var timeboxscope = this.getContext().getTimeboxScope();
-        if (!timeboxscope && !app.getSetting('showFilter')) {
-            Ext.getCmp('headerBox').add({
-                xtype: 'rallybutton',
-                id: 'MakeItSo',
-                margin: 10,
-                text: 'Commit WSJF as Rank',
-                handler: this._storeRecords,
-                scope: this
-            });
-
-            //Add the option to commit first record to top of global rank.
-            Ext.getCmp('headerBox').add({
-                xtype: 'rallycheckboxfield',
-                fieldLabel: 'Override global rank',
-                id: 'globalCheck',
-                value: false,
-                margin: 10
-            });
-
-        }
+        gApp.timeboxscope = this.getContext().getTimeboxScope();
     },
 
     _onFilterChange: function(inlineFilterButton){
-        var me = this;
-        me.advFilters = inlineFilterButton.getTypesAndFilters().filters;
-        me._startApp(me);
+        gApp.advFilters = inlineFilterButton.getTypesAndFilters().filters;
+        gApp._startApp();
     },
 
     _onFilterReady: function(inlineFilterPanel) {
-        var me = this;
         Ext.getCmp('filterBox').add(inlineFilterPanel);
     },
 
@@ -314,36 +277,23 @@ Ext.define('CustomApp', {
 
     _getFilters: function(app) {
         var filters = [];
-
-        // We do not have timeboxes on higher level portfolio items
-        if (Ext.getCmp('itemType').getRecord() && Ext.getCmp('itemType').getRecord().data.Ordinal === 0) {
-            var timeboxscope = this.getContext().getTimeboxScope();
-            if (timeboxscope) {
-                var filterQuery = timeboxscope.getQueryFilter();
-                if (filterQuery.value) {
-                    filters.push(filterQuery.value.config);
-                } else {
-                    filters.push({
-                        property: 'Release',
-                        operator: '=',
-                        value: null
-
-                    });
-                }
+        var timeboxscope = this.getContext().getTimeboxScope();
+        if (timeboxscope) {
+            var filterQuery = timeboxscope.getQueryFilter();
+            if (filterQuery.value) {
+                filters.push(filterQuery.value.config);
             }
         }
 
         filters.push({
-            property: 'State.Name',
-            operator: '!=',
-            value: 'Done'
+            property: 'ScheduleState',
+            operator: '<',
+            value: 'Completed'
         });
 
         //Now get the settings query box and apply those settings
-        var queryString = app.getSetting('query');
+        var queryString = gApp.getSetting('query');
         if (queryString) {
-            if ( Ext.getCmp('MakeItSo')) Ext.getCmp('MakeItSo').hide(); //Don't allow committing if subselected
-            if ( Ext.getCmp('globalCheck')) Ext.getCmp('globalCheck').hide();
             var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
             filterObj.itemId = filterObj.toString();
             filters.push(filterObj);
@@ -354,14 +304,12 @@ Ext.define('CustomApp', {
                 filters.push(filter);
             });
         }
-
         return filters;
     },
 
-    _startApp: function(app) {
+    _startApp: function() {
 
-        var modeltype = 'portfolioitem/' + Ext.getCmp('itemType').rawValue;
-        var modelNames = [modeltype];
+        var modelNames = ['HierarchicalRequirement', 'Defect'];
 
         var oldGrid = Ext.getCmp('piGrid');
 
@@ -374,15 +322,15 @@ Ext.define('CustomApp', {
             }
         ];
 
-        if (app.getSetting('useStateField')) {
+        if (gApp.getSetting('useStateField')) {
             columnCfgs.push({
-                dataIndex: 'State',
-                text: 'State',
+                dataIndex: 'ScheduleState',
+                text: 'ScheduleState',
                 align: 'center'
             });
         }
 
-        if (app.getSetting('useProjectField')) {
+        if (gApp.getSetting('useProjectField')) {
             columnCfgs.push({
                 dataIndex: 'Project',
                 text: 'Project',
@@ -390,84 +338,27 @@ Ext.define('CustomApp', {
             });
         }
 
-        columnCfgs.push({
-            dataIndex: 'RROEValue',
-            text: 'RR/OE',
-            align: 'center',
-            listeners: {
-                afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetRisk');
-                    helpHTML = thisMenu.getHelp();
-                    Ext.create('Rally.ui.tooltip.ToolTip', {
-                        target: this.getEl(),
-                        html: helpHTML
-                    });
+        _.each( gApp.wsjfCalcFields, function(field) {
+            columnCfgs.push({
+                dataIndex: field.field,
+                text: field.name,
+                align: 'center',
+                listeners: {
+                    afterrender: function() {
+                        thisMenu = Ext.create(field.menu);
+                        helpHTML = thisMenu.getHelp();
+                        Ext.create('Rally.ui.tooltip.ToolTip', {
+                            target: this.getEl(),
+                            html: helpHTML
+                        });
+                    }
                 }
-            }
-        }, {
-            dataIndex: 'UserBusinessValue',
-            text: 'Derived Value',
-            align: 'center',
-            listeners: {
-                afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetValue');
-                    helpHTML = thisMenu.getHelp();
-                    Ext.create('Rally.ui.tooltip.ToolTip', {
-                        target: this.getEl(),
-                        html: helpHTML
-                    });
-                }
-            }
-        }, {
-            dataIndex: 'TimeCriticality',
-            text: 'Time Criticality',
-            align: 'center',
-            listeners: {
-                afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetTime');
-                    helpHTML = thisMenu.getHelp();
-                    Ext.create('Rally.ui.tooltip.ToolTip', {
-                        target: this.getEl(),
-                        html: helpHTML
-                    });
-                }
-            }
+            });
         });
 
-
-        sizeCol = {
-            text: 'Size',
-            align: 'center',
-            listeners: {
-                afterrender: function() {
-                    thisMenu = Ext.create('wsjfBulkSetSize');
-                    helpHTML = thisMenu.getHelp();
-                    Ext.create('Rally.ui.tooltip.ToolTip', {
-                        target: this.getEl(),
-                        html: helpHTML
-                    });
-                }
-            }
-
-        };
-
-        // If we are using preliminary estimate, pick up that instead.
-
-        if (app.getSetting('usePrelim')) {
-            sizeCol = _.merge(sizeCol, {
-                dataIndex: 'PreliminaryEstimate'
-            });
-        } else {
-            sizeCol = _.merge(sizeCol, {
-                dataIndex: 'JobSize'
-            });
-        }
-
-        columnCfgs.push(sizeCol);
-
         wsjfCol = {
-            dataIndex: 'WSJFScore',
-            text: 'WSJF',
+            dataIndex: gApp.wsjfField.field,
+            text: gApp.wsjfField.name,
             align: 'center',
             listeners: {
                 afterrender: function() {
@@ -479,7 +370,7 @@ Ext.define('CustomApp', {
             }
         };
 
-        if (app.getSetting('useWSJFReadOnly')) {
+        if (gApp.getSetting('useWSJFReadOnly')) {
             wsjfCol = _.merge(wsjfCol, {
                 editor: null
             });
@@ -487,12 +378,16 @@ Ext.define('CustomApp', {
 
         columnCfgs.push(wsjfCol);
 
+        var wsjfScore = gApp.wsjfField.field;
+        var fetchList = [ 'FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'ScheduleState', 'State', wsjfScore ];
+        
+        _.each(gApp.wsjfCalcFields, function(field) {
+            fetchList.push(field.field);
+        });
+        
         var grid = Ext.create('Rally.ui.grid.Grid', {
             id: 'piGrid',
             margin: '40, 10, 40, 10',
-
-//            plugins: ['rallydescriptionpopover' ],
-
             plugins: [
                 'rallydependenciesplugin'
             ],
@@ -515,15 +410,17 @@ Ext.define('CustomApp', {
                 pageSize: 200,
                 batchAction: true,
                 model: modelNames,
-                sorters: [{
-                    property: 'WSJFScore',
+                sorters: [
+                {
+                    property: gApp.wsjfField.field,
                     direction: 'DESC'
-                }, {
+                }, 
+                {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
                 }],
-                fetch: ['FormattedID', 'PreliminaryEstimate', 'Name', 'Release', 'Project', 'JobSize', 'RROEValue', 'TimeCriticality', 'UserBusinessValue', 'WSJFScore', 'State'],
-                filters: app._getFilters(app)
+                fetch: fetchList,
+                filters: gApp._getFilters()
             },
 
             listeners: {
@@ -531,14 +428,14 @@ Ext.define('CustomApp', {
                     this._saveWSJF(record);
                 },
                 load: function(store) {
-                    if (app.getSetting('useWSJFOverLoad')) {
+                    if (gApp.getSetting('useWSJFOverLoad')) {
                         Ext.getCmp('headerBox').setLoading('Updating WSJF...'); 
                         var records = store.getRecords();
                         var me = this;
                         _.each(records, function(record) {
                             var num = me._calcWSJF(record).toFixed(2);
-                            if ( num !== record.get('WSJFScore').toFixed(2)) {
-                                record.set('WSJFScore',num);
+                            if ( num !== record.get(wsjfScore).toFixed(2)) {
+                                record.set(wsjfScore,num);
                             }
                         });
                         this._storeSync(store);
@@ -578,28 +475,41 @@ Ext.define('CustomApp', {
 
             _calcWSJF: function(record) {
                 var num = 0.0;
-                if (app.getSetting('usePrelim')) {
-                    if (record.get('PreliminaryEstimate') && ((peVal = record.get('PreliminaryEstimate').Value) > 0)) {
-                        num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('PreliminaryEstimate').Value;
-                    }
-                } else {
-                    num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
-                }
+
+                //Add up above the line
+                var aboveTheLine = 0;
+                var belowTheLine = 0;   //Prevent divide by zero later on.
+
+                _.each(_.filter(gApp.wsjfCalcFields, function(field) {
+                    return field.aboveLine;
+                }), function(field) {
+                    aboveTheLine += record.get(field.name);
+                });
+
+                //Add up below the line
+                _.each(_.filter(gApp.wsjfCalcFields, function(field) {
+                    return !field.aboveLine;
+                }), function(field) {
+                    belowTheLine += record.get(field.name);
+                });
+
+                //Do the calc
+                num = aboveTheLine/ ( belowTheLine>0? belowTheLine: 1);
                 return num;
             },
 
             _saveWSJF: function(record) {
                 var num = this._calcWSJF(record);
-                var oldVal = record.get('WSJFScore').toFixed(2);
+                var oldVal = record.get(gApp.wsjfField.name).toFixed(2);
 
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
                 num = num.toFixed(2);
 
                 if (num !== oldVal) {
-                    record.set('WSJFScore', num);
+                    record.set(gApp.wsjfField.name, num);
                     record.save({
                         callback: function() {
-                            if (app.getSetting('useWSJFAutoSort')) {
+                            if (gApp.getSetting('useWSJFAutoSort')) {
                                 Ext.getCmp('piGrid').refresh();
                             }
                         }
