@@ -86,8 +86,8 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
             id: 'wsjfBulkSetTime'
         });
         items.push({
-            xtype: 'wsjfBulkSetSize',
-            id: 'wsjfBulkSetSize'
+            xtype: 'wsjfBulkSetPlan',
+            id: 'wsjfBulkSetPlan'
         });
 
         _.each(items, function(item) {
@@ -132,9 +132,9 @@ Ext.define('CustomApp', {
         wsjfField: { field: 'WSJFScore', name: 'WSJF Score'},
         wsjfCalcFields:[   
             { field: 'RROEValue',         name: 'RR/OE',            menu: 'wsjfBulkSetRisk',  aboveLine: true },
-            { field: 'UserBusinessValue', name: 'End User Value',   menu: 'wsjfBulkSetValue', aboveLine: true },
+            { field: 'UserBusinessValue', name: 'Derived Value',   menu: 'wsjfBulkSetValue', aboveLine: true },
             { field: 'TimeCriticality',   name: 'Time Criticality', menu: 'wsjfBulkSetTime',  aboveLine: true },
-            { field: 'Size',              name: 'Size',             menu: 'wsjfBulkSetSize',  aboveLine: false }
+            { field: 'PlanEstimate',      name: 'Size',             menu: 'wsjfBulkSetPlan',  aboveLine: false }
         ]
     },
 
@@ -475,7 +475,7 @@ Ext.define('CustomApp', {
 
             _calcWSJF: function(record) {
                 var num = 0.0;
-
+debugger;
                 //Add up above the line
                 var aboveTheLine = 0;
                 var belowTheLine = 0;   //Prevent divide by zero later on.
@@ -483,14 +483,14 @@ Ext.define('CustomApp', {
                 _.each(_.filter(gApp.wsjfCalcFields, function(field) {
                     return field.aboveLine;
                 }), function(field) {
-                    aboveTheLine += record.get(field.name);
+                    aboveTheLine += record.get(field.field);
                 });
 
                 //Add up below the line
                 _.each(_.filter(gApp.wsjfCalcFields, function(field) {
                     return !field.aboveLine;
                 }), function(field) {
-                    belowTheLine += record.get(field.name);
+                    belowTheLine += record.get(field.field);
                 });
 
                 //Do the calc
@@ -500,13 +500,13 @@ Ext.define('CustomApp', {
 
             _saveWSJF: function(record) {
                 var num = this._calcWSJF(record);
-                var oldVal = record.get(gApp.wsjfField.name).toFixed(2);
+                var oldVal = record.get(gApp.wsjfField.field)? record.get(gApp.wsjfField.field).toFixed(2): 0.0;
 
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
                 num = num.toFixed(2);
 
                 if (num !== oldVal) {
-                    record.set(gApp.wsjfField.name, num);
+                    record.set(gApp.wsjfField.field, num);
                     record.save({
                         callback: function() {
                             if (gApp.getSetting('useWSJFAutoSort')) {
@@ -803,6 +803,47 @@ Ext.define('wsjfBulkSetSize', {
         text: 'Size',
         handler: function(arg1, arg2, arg3) {
             this._onSetParam('Choose Size/Effort Rating', 'JobSize');
+        },
+        data: [{
+            'Name': 'XS',
+            'Value': 1,
+            'Description': 'Less than 1 week'
+        }, {
+            'Name': 'S',
+            'Value': 2,
+            'Description': '1 - 3 weeks'
+        }, {
+            'Name': 'M',
+            'Value': 3,
+            'Description': '1 - 2 months'
+        }, {
+            'Name': 'L',
+            'Value': 5,
+            'Description': '3 - 6 months'
+        }, {
+            'Name': 'XL',
+            'Value': 8,
+            'Description': '6 - 9 months'
+        }, {
+            'Name': 'XXL',
+            'Value': 13,
+            'Description': '9 - 18 months'
+        }, {
+            'Name': 'XXXL',
+            'Value': 21,
+            'Description': 'Two years or more'
+        }]
+    }
+});
+
+Ext.define('wsjfBulkSetPlan', {
+    extend: Rally.ui.grid.localWSJFBulkSet,
+    alias: 'widget.wsjfBulkSetPlan',
+
+    config: {
+        text: 'Size',
+        handler: function(arg1, arg2, arg3) {
+            this._onSetParam('Choose Size/Effort Rating', 'PlanEstimate');
         },
         data: [{
             'Name': 'XS',
