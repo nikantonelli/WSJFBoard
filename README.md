@@ -22,9 +22,10 @@ Normal editing menu:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/normal%20edit%20menu.png)
 
-Bulk editing to standard values:
+Bulk editing to standard values and setting other fields (e.g. Itertation):
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/Bulk%20edit%20menu.png)
+
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/fibonacci.jpg)
 
 The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
