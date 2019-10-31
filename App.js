@@ -106,7 +106,7 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
             handler: function() {
                 Ext.create('Rally.ui.dialog.BulkierEditDialog', {
                     records: records
-                })
+                });
             }
         });
         items.push( bulkMenu  );
