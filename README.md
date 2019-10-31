@@ -1,14 +1,16 @@
 WSJFBoard
 =========================
 
+## NOTE: To prevent loading massive tranches of data (just because you started in the wrong peroject), you have to hit the Fetch Items button!
+
 ## Overview
-Grid board to calculate WSJF from Risk, Value, TimeCriticality and JobSize and re-rank within Rally.  Add to a board with a Release filter in it's options to show lowest level Portfolio Item types with a 'Release' timebox setting.
+Grid board to calculate WSJF from Risk, Value, TimeCriticality and PlanEstimate and re-rank on-screen.  Add to a page with a Release filter in if you wish.
 
-Portfolio Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
+Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
 
-If any filter is applied (i.e. via query box or by using a page filtered by release) the ability to commit the rank is removed. This is a safety feature to avoid time consuming mistakes (and not a bug)!
+Any filter can be applied (i.e. via query box or by using a page filtered by release)
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/overview.jpng)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/overview.png)
 
 ## Features
 
@@ -27,10 +29,6 @@ Bulk editing to standard values:
 
 The standard values can be changed in the data blocks at the end of the source code file (App.js) or directly in the html after you have loaded it into the custom html page.
 
-Commit of viewed WSJF table as rank in the database:
-
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/set%20global%20rank.jpg)
-
 ## Helper messages
 
 Hover over the column titles to get pop-ups with 'reminder' info on the column. These too, can be changed in the data blocks to your needs.
@@ -47,15 +45,7 @@ By going to "Edit App Settings" from the gear in the top right hand corner:
 
 3. You can stop users directly modifying the WSJF (to enforce the rule of setting the source values)
 
-4. You can use either the 'JobSize' field or the 'Preliminary Estimate' (T-Shirt sizing).
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/master/images/options.png)
 
-If you change from JobSize to PrelimEst and set the 'recalculate on load' checkbox, the app will rework the numbers accordingly.
-
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/options.png)
-
-## Caveat!
-
-The current version only re-ranks the number of rows shown in the table. Set to 200 for the most re-ranked in one go.
-
-If you are trying to rank more than 200 portfolio items, you are doing something wrong.
+If you are trying to rank more than 200 items, you are generally doing something wrong.
 
