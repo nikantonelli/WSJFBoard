@@ -81,7 +81,8 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
     override: 'Rally.ui.menu.bulk.RecordMenu',
     _getMenuItems: function() {
         var records = this.getRecords();
-        var items = this.callParent(arguments);
+//        var items = this.callParent(arguments);
+        var items = [];
         items.push({
             xtype: 'wsjfBulkSetRisk',
             id: 'wsjfBulkSetRisk'
@@ -108,6 +109,16 @@ Ext.define('Rally.ui.bulk.RecordMenuFix', {
                 context: this.getContext()
             });
         }, this);
+
+        var bulkMenu = Ext.create( 'Rally.ui.menu.bulk.MenuItem', {
+            text: 'Bulk Edit',
+            handler: function() {
+                Ext.create('Rally.ui.dialog.BulkierEditDialog', {
+                    records: records
+                })
+            }
+        });
+        items.push( bulkMenu  );
 
         return items;
     }
@@ -442,7 +453,7 @@ Ext.define('CustomApp', {
                         var records = store.getRecords();
                         var me = this;
                         _.each(records, function(record) {
-                            var num = me._calcWSJF(record).toFixed(2);
+                            var num = gApp._calcWSJF(record).toFixed(2);
                             if ( num !== record.get(wsjfScore).toFixed(2)) {
                                 record.set(wsjfScore,num);
                             }
@@ -482,32 +493,8 @@ Ext.define('CustomApp', {
                 }
             },
 
-            _calcWSJF: function(record) {
-                var num = 0.0;
-                //Add up above the line
-                var aboveTheLine = 0;
-                var belowTheLine = 0;   //Prevent divide by zero later on.
-
-                _.each(_.filter(gApp.wsjfCalcFields, function(field) {
-                    return field.aboveLine;
-                }), function(field) {
-                    aboveTheLine += record.get(field.field);
-                });
-
-                //Add up below the line
-                _.each(_.filter(gApp.wsjfCalcFields, function(field) {
-                    return !field.aboveLine;
-                }), function(field) {
-                    belowTheLine += record.get(field.field);
-                });
-
-                //Do the calc
-                num = aboveTheLine/ ( belowTheLine>0? belowTheLine: 1);
-                return num;
-            },
-
             _saveWSJF: function(record) {
-                var num = this._calcWSJF(record);
+                var num = gApp._calcWSJF(record);
                 var oldVal = record.get(gApp.wsjfField.field)? record.get(gApp.wsjfField.field).toFixed(2): 0.0;
 
                 //if the field is 'decimal' you can only have two decimal places....or it doesn't save it!
@@ -531,6 +518,30 @@ Ext.define('CustomApp', {
 
         this.add(grid);
 
+    },
+
+    _calcWSJF: function(record) {
+        var num = 0.0;
+        //Add up above the line
+        var aboveTheLine = 0;
+        var belowTheLine = 0;   //Prevent divide by zero later on.
+
+        _.each(_.filter(gApp.wsjfCalcFields, function(field) {
+            return field.aboveLine;
+        }), function(field) {
+            aboveTheLine += record.get(field.field);
+        });
+
+        //Add up below the line
+        _.each(_.filter(gApp.wsjfCalcFields, function(field) {
+            return !field.aboveLine;
+        }), function(field) {
+            belowTheLine += record.get(field.field);
+        });
+
+        //Do the calc
+        num = aboveTheLine/ ( belowTheLine>0? belowTheLine: 1);
+        return num;
     },
 
     _recordToRank: 0,
@@ -647,10 +658,10 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                 handler: function(arg1, arg2, arg3) {
                     _.each(this.records, function(record) {
                         record.set(chooserField, Ext.getCmp('localBox').value);
-                        var num = (record.get('RROEValue') + record.get('UserBusinessValue') + record.get('TimeCriticality')) / record.get('JobSize');
+                        var num = gApp._calcWSJF(record).toFixed(2);
 
                         //if the field is 'decimal' you can only have two decimal places....
-                        record.set('WSJFScore', num.toFixed(2));
+                        record.set(gApp.WSJFScore.field, num.toFixed(2));
                         record.save({
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
