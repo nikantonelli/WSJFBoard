@@ -10,7 +10,7 @@ Items of interest can be selected by entering a query in the App Settings (via g
 
 Any filter can be applied (i.e. via query box or by using a page filtered by release)
 
-![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/overview.png)
+![alt text](https://github.com/nikantonelli/WSJFBoard/blob/Mix-Features-Stories-and-defects/images/overview.png)
 
 ## Features
 
