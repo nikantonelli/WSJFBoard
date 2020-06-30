@@ -6,7 +6,7 @@ WSJFBoard
 ## Overview
 Grid board to calculate WSJF from Risk, Value, TimeCriticality and PlanEstimate and re-rank on-screen.  Add to a page with a Release filter in if you wish.
 
-Create the fields on defects and stories the same as Features if you want to use those types in one grid.
+Create the fields on defects and stories the same as Features if you want to use WSJF on those types in one grid.
 
 Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
 
