@@ -122,10 +122,12 @@ Ext.define('CustomApp', {
 
     id: 'wsjfApp',
 
-    scopeType: 'release',
     settingsScope: 'project',
 
     stateful: true,
+
+    modelNames: [ 'Defect','PortfolioItem/Feature'],
+
 
     onTimeboxScopeChange: function(newTimeboxScope) {
         this.callParent(arguments);
@@ -256,7 +258,7 @@ Ext.define('CustomApp', {
                     stateful: true,
                     stateId: this.getContext().getScopedStateId('inline-filter'),
                     context: this.getContext(),
-                    modelNames: ['HierarchicalRequirement'],
+                    modelNames: gApp.modelNames,
                     filterChildren: false,
                     inlineFilterPanelConfig: {
                         quickFilterPanelConfig: {
@@ -289,6 +291,13 @@ Ext.define('CustomApp', {
     _getFilters: function(app) {
         var filters = [];
         var timeboxscope = this.getContext().getTimeboxScope();
+
+        // var filterObj = Rally.data.wsapi.Filter.fromQueryString(
+        //     "(State < Done)"
+        // );
+        // filterObj.itemId = filterObj.toString();
+        // filters.push(filterObj);
+
         if (timeboxscope) {
             var filterQuery = timeboxscope.getQueryFilter();
             if (filterQuery.value) {
@@ -296,18 +305,12 @@ Ext.define('CustomApp', {
             }
         }
 
-        filters.push({
-            property: 'ScheduleState',
-            operator: '<',
-            value: 'Completed'
-        });
-
         //Now get the settings query box and apply those settings
         var queryString = gApp.getSetting('query');
         if (queryString) {
-            var filterObj = Rally.data.wsapi.Filter.fromQueryString(queryString);
-            filterObj.itemId = filterObj.toString();
-            filters.push(filterObj);
+            var filterStr = Rally.data.wsapi.Filter.fromQueryString(queryString);
+            filterStr.itemId = filterStr.toString();
+            filters.push(filterStr);
         }
 
         if(this.getSetting('showFilter') && this.advFilters.length > 0){
@@ -319,8 +322,6 @@ Ext.define('CustomApp', {
     },
 
     _startApp: function() {
-
-        var modelNames = ['HierarchicalRequirement', 'Defect'];
 
         var oldGrid = Ext.getCmp('piGrid');
 
@@ -420,12 +421,8 @@ Ext.define('CustomApp', {
             storeConfig: {
                 pageSize: 200,
                 batchAction: true,
-                model: modelNames,
+                model: gApp.modelNames,
                 sorters: [
-                {
-                    property: gApp.wsjfField.field,
-                    direction: 'DESC'
-                }, 
                 {
                     property: 'DragAndDropRank',
                     direction: 'ASC'
