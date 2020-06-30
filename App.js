@@ -207,6 +207,11 @@ Ext.define('CustomApp', {
             fieldLabel: 'Show Advanced filter',
             labelWidth: 200,
             name: 'showFilter'
+        },{
+            xtype: 'rallycheckboxfield',
+            fieldLabel: 'Include Stories',
+            labelWidth: 200,
+            name: 'addStories'
         }];
     },
 
@@ -217,6 +222,10 @@ Ext.define('CustomApp', {
         gApp = this;
 
 
+        if ( this.getSetting('addStories')){
+            this.modelNames = _.union(this.modelNames, ["HierarchicalRequirement"]);
+
+        }
         this.add({
             xtype: 'container',
             id: 'headerBox',
@@ -338,6 +347,11 @@ Ext.define('CustomApp', {
             columnCfgs.push({
                 dataIndex: 'ScheduleState',
                 text: 'ScheduleState',
+                align: 'center'
+            });
+            columnCfgs.push({
+                dataIndex: 'State',
+                text: 'State',
                 align: 'center'
             });
         }
