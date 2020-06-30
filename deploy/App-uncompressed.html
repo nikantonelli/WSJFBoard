@@ -145,18 +145,20 @@ Ext.define('CustomApp', {
 
     config: {
         defaultSettings: {
-            useWSJFOverLoad: false,
+            useWSJFOverLoad: true,
             useWSJFReadOnly: true,
             useProjectField: true,
             useStateField: true,
             showFilter: false,
+            addStories: false
         },
         wsjfField: { field: 'WSJFScore', name: 'WSJF Score'},
         wsjfCalcFields:[   
-            { field: 'RROEValue',         name: 'RR/OE',            menu: 'wsjfBulkSetRisk',  aboveLine: true },
-            { field: 'UserBusinessValue', name: 'Derived Value',   menu: 'wsjfBulkSetValue', aboveLine: true },
-            { field: 'TimeCriticality',   name: 'Time Criticality', menu: 'wsjfBulkSetTime',  aboveLine: true },
-            { field: 'PlanEstimate',      name: 'Size',             menu: 'wsjfBulkSetPlan',  aboveLine: false }
+            { field: 'RROEValue',         name: 'RR/OE',             menu: 'wsjfBulkSetRisk',  aboveLine: true },
+            { field: 'UserBusinessValue', name: 'Derived Value',     menu: 'wsjfBulkSetValue', aboveLine: true },
+            { field: 'TimeCriticality',   name: 'Time Criticality',  menu: 'wsjfBulkSetTime',  aboveLine: true },
+            { field: 'PlanEstimate',      name: 'Plan Estimate',     menu: 'wsjfBulkSetPlan',  aboveLine: false },
+            { field: 'JobSize',           name: 'Job Size',          menu: 'wsjfBulkSetSize',  aboveLine: false }
         ]
     },
 
@@ -463,12 +465,17 @@ Ext.define('CustomApp', {
                         Ext.getCmp('headerBox').setLoading('Updating WSJF...'); 
                         var records = store.getRecords();
                         var me = this;
+                        var clearLoading = true;
                         _.each(records, function(record) {
-                            var num = gApp._calcWSJF(record).toFixed(2);
-                            if ( num !== record.get(wsjfScore).toFixed(2)) {
-                                record.set(wsjfScore,num);
+                            if ( record.hasField(wsjfScore)){
+                                var num = gApp._calcWSJF(record).toFixed(2);
+                                if ( num !== (record.get(wsjfScore) || 0).toFixed(2)) {
+                                    record.set(wsjfScore,num);
+                                    clearLoading = false;
+                                }
                             }
                         });
+                        if (clearLoading) { Ext.getCmp('headerBox').setLoading(false); }
                         this._storeSync(store);
                     }
                 }
@@ -499,7 +506,7 @@ Ext.define('CustomApp', {
                         success: function() { console.log("Completed " + promises.length + " saves." );},
                         failure: function() { console.log("Failed to save all records." );}
                     }).always( function() {
-                        Ext.getCmp('headerBox').setLoading(false);       
+                        Ext.getCmp('headerBox').setLoading(false);
                     });
                 }
             },
@@ -537,21 +544,26 @@ Ext.define('CustomApp', {
         var aboveTheLine = 0;
         var belowTheLine = 0;   //Prevent divide by zero later on.
 
+        console.log("Above")
         _.each(_.filter(gApp.wsjfCalcFields, function(field) {
             return field.aboveLine;
         }), function(field) {
-            aboveTheLine += record.get(field.field);
+            console.log(field.field, record.get(field.field));
+            aboveTheLine += record.get(field.field) || 0;
         });
 
         //Add up below the line
+        console.log("Below")
         _.each(_.filter(gApp.wsjfCalcFields, function(field) {
             return !field.aboveLine;
         }), function(field) {
-            belowTheLine += record.get(field.field);
+            console.log(field.field, record.get(field.field));
+            belowTheLine += record.get(field.field) || 0;
         });
 
         //Do the calc
         num = aboveTheLine/ ( belowTheLine>0? belowTheLine: 1);
+        console.log("wsjf", num);
         return num;
     },
 
@@ -872,8 +884,19 @@ Ext.define('wsjfBulkSetPlan', {
 
     config: {
         text: 'Size',
-        handler: function(arg1, arg2, arg3) {
-            this._onSetParam('Choose Size/Effort Rating', 'PlanEstimate');
+        handler: function(menu, arg2, arg3) {
+            debugger;
+            //Cannot easily set size of differing types yet.
+            if ( _.uniq(_.map(menu.records, "data._type")).length > 1) {
+                Rally.ui.notify.Notifier.show({message: 'Please select only one type of item'});
+                return;
+            }
+
+            if (menu.records[0].data._type.search("portfolio" > 0)){
+                this._onSetParam('Choose Size/Effort Rating', 'PlanEstimate');
+            } else {
+                this._onSetParam('Choose Size/Effort Rating', 'PlanEstimate');
+            }
         },
         data: [{
             'Name': 'XS',
