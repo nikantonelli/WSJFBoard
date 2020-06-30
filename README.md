@@ -1,10 +1,12 @@
 WSJFBoard
 =========================
 
-## NOTE: To prevent loading massive tranches of data (just because you started in the wrong project), you have to hit the Fetch Items button!
+## NOTE: To prevent loading/updating massive tranches of data (just because you started in the wrong project), you have to hit the Fetch Items button!
 
 ## Overview
 Grid board to calculate WSJF from Risk, Value, TimeCriticality and PlanEstimate and re-rank on-screen.  Add to a page with a Release filter in if you wish.
+
+Create the fields on defects and stories the same as Features if you want to use those types in one grid.
 
 Items of interest can be selected by entering a query in the App Settings (via gear in top right of app).
 
@@ -22,7 +24,7 @@ Normal editing menu:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/normal%20edit%20menu.png)
 
-Bulk editing to standard values and setting other fields (e.g. Itertation):
+Bulk editing to standard values and setting other fields (e.g. Itertation). You can't set the size field for twp different artifact types just yet:
 
 ![alt text](https://github.com/nikantonelli/WSJFBoard/blob/User-Stories/images/Bulk%20edit%20menu.png)
 
