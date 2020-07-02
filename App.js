@@ -220,6 +220,8 @@ Ext.define('CustomApp', {
 
     launch: function() {
     
+        gApp = this;
+
         Rally.data.util.PortfolioItemHelper.getPortfolioItemTypes().then({
             scope: this,
             success: function(portfolioItemTypes) {
@@ -234,8 +236,6 @@ Ext.define('CustomApp', {
 
     _piTypesLoaded: function() {
         
-        gApp = this;
-
 
         if ( this.getSetting('addStories')){
             this.modelNames = _.union(this.modelNames, ["HierarchicalRequirement"]);
