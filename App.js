@@ -126,7 +126,7 @@ Ext.define('CustomApp', {
 
     stateful: true,
 
-    modelNames: [ 'Defect','PortfolioItem/Feature'],
+    modelNames: [ 'Defect'],     //Things we want by default. Others are added in the program
 
 
     onTimeboxScopeChange: function(newTimeboxScope) {
@@ -219,8 +219,21 @@ Ext.define('CustomApp', {
 
 
     launch: function() {
+    
+        Rally.data.util.PortfolioItemHelper.getPortfolioItemTypes().then({
+            scope: this,
+            success: function(portfolioItemTypes) {
+                this.portfolioItemTypes = _.sortBy(portfolioItemTypes, function(type) {
+                    return type.get('Ordinal');
+                });
+                this._piTypesLoaded();
+                this.modelNames = _.union(this.modelNames, [this.portfolioItemTypes[0].get('TypePath')]);
+            }
+        });
+    },
 
-        var context = this.getContext();
+    _piTypesLoaded: function() {
+        
         gApp = this;
 
 
@@ -535,26 +548,21 @@ Ext.define('CustomApp', {
         var aboveTheLine = 0;
         var belowTheLine = 0;   //Prevent divide by zero later on.
 
-        console.log("Above")
         _.each(_.filter(gApp.wsjfCalcFields, function(field) {
             return field.aboveLine;
         }), function(field) {
-            console.log(field.field, record.get(field.field));
             aboveTheLine += record.get(field.field) || 0;
         });
 
         //Add up below the line
-        console.log("Below")
         _.each(_.filter(gApp.wsjfCalcFields, function(field) {
             return !field.aboveLine;
         }), function(field) {
-            console.log(field.field, record.get(field.field));
             belowTheLine += record.get(field.field) || 0;
         });
 
         //Do the calc
         num = aboveTheLine/ ( belowTheLine>0? belowTheLine: 1);
-        console.log("wsjf", num);
         return num;
     },
 
@@ -675,7 +683,7 @@ Ext.define('Rally.ui.grid.localWSJFBulkSet', {
                         var num = gApp._calcWSJF(record).toFixed(2);
 
                         //if the field is 'decimal' you can only have two decimal places....
-                        record.set(gApp.WSJFScore.field, num.toFixed(2));
+                        record.set(gApp.wsjfField.field, num);
                         record.save({
                             callback: function() {
                                 if (Ext.getCmp('wsjfApp').getSetting('useWSJFAutoSort')) {
@@ -876,9 +884,10 @@ Ext.define('wsjfBulkSetPlan', {
     config: {
         text: 'Size',
         handler: function(menu, arg2, arg3) {
-            debugger;
             //Cannot easily set size of differing types yet.
-            if ( _.uniq(_.map(menu.records, "data._type")).length > 1) {
+            if ( _.uniq(_.map(menu.records, function(record) {
+                    return record.get("_type");
+                    })).length > 1) {
                 Rally.ui.notify.Notifier.show({message: 'Please select only one type of item'});
                 return;
             }
