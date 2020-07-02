@@ -226,8 +226,8 @@ Ext.define('CustomApp', {
                 this.portfolioItemTypes = _.sortBy(portfolioItemTypes, function(type) {
                     return type.get('Ordinal');
                 });
-                this._piTypesLoaded();
                 this.modelNames = _.union(this.modelNames, [this.portfolioItemTypes[0].get('TypePath')]);
+                this._piTypesLoaded();
             }
         });
     },
